@@ -32,7 +32,7 @@ TARGET := ed25519-keypair
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) -D'CRYPTO_NAMESPACE(name)=ed_##name' \
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) -D'CRYPTO_NAMESPACE(name)=crypto_##name' \
 		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name' \
 		-Dcrypto_hash_sha512=crypto_hash 
 
@@ -40,9 +40,9 @@ $(TARGET): $(OBJS)
 # Generic compile rule
 %.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@  -D'CRYPTO_NAMESPACE(name)=ed_##name' \
+	$(CC) $(CFLAGS) -c $< -o $@  -D'CRYPTO_NAMESPACE(name)=crypto_##name' \
 		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name' \
-		-Dcrypto_hash_sha512=crypto_hash 
+		-Dcrypto_hash_sha512=crypto_hash  
 
 
 run: all
