@@ -6248,3 +6248,4 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	movq 	%r11,%rsp
 
 	ret
+.section	.note.GNU-stack,"",@progbits

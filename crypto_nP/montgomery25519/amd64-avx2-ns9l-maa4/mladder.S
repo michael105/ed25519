@@ -1283,3 +1283,4 @@ movq 	  48(%rsp),%rbp
 movq 	  %r11,%rsp
 
 ret
+.section	.note.GNU-stack,"",@progbits

@@ -3258,3 +3258,4 @@ CRYPTO_SHARED_NAMESPACE(mladder):
 	movq 	%r11,%rsp
 
 	ret
+.section	.note.GNU-stack,"",@progbits

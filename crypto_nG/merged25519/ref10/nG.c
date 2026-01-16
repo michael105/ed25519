@@ -1,8 +1,11 @@
+// 20240926 djb: use cryptoint
+
 #include <string.h>
 #include "randombytes.h"
 #include "crypto_nG.h"
 #include "crypto_hash_sha512.h"
 #include "ge.h"
+#include "crypto_uint8.h"
 
 void crypto_nG(unsigned char *pk,const unsigned char *sk)
 {
@@ -16,7 +19,7 @@ void crypto_nG(unsigned char *pk,const unsigned char *sk)
   int wantmont;
 
   for (int i = 0;i < 32;++i) e[i] = sk[i];
-  wantmont = e[31]>>7;
+  wantmont = crypto_uint8_topbit_01(e[31]);
   e[31] &= 127;
 
   ge_scalarmult_base(&A,e);
@@ -38,5 +41,5 @@ void crypto_nG(unsigned char *pk,const unsigned char *sk)
   fe_tobytes(pk,y);
 
   fe_mul(x,A.X,recip);
-  pk[31] ^= ((1-wantmont) & fe_isnegative(x)) << 7;
+  pk[31] ^= crypto_uint8_shlmod((1-wantmont) & fe_isnegative(x),7);
 }

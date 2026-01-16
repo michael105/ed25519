@@ -1,3 +1,8 @@
+// 20240926 djb: using cryptoint
+// 20240227 djb: switching from mode TI to unsigned __int128
+// 20240227 djb: changing uint128_t to my_uint128_t
+// 20240227 djb: importing load/store fixes from upstream
+
 /* Copyright 2008, Google Inc.
  * All rights reserved.
  *
@@ -25,13 +30,14 @@
 #include <string.h>
 #include <stdint.h>
 #include "crypto_nP.h"
+#include "crypto_uint8.h"
 
 typedef uint8_t u8;
 typedef uint64_t limb;
 typedef limb felem[5];
 // This is a special gcc mode for 128-bit integers. It's implemented on 64-bit
 // platforms only as far as I know.
-typedef unsigned uint128_t __attribute__((mode(TI)));
+typedef unsigned __int128 my_uint128_t;
 
 #undef force_inline
 #define force_inline __attribute__((always_inline)) inline
@@ -68,21 +74,21 @@ fdifference_backwards(felem out, const felem in) {
 /* Multiply a number by a scalar: output = in * scalar */
 static void force_inline
 fscalar_product(felem output, const felem in, const limb scalar) {
-  uint128_t a;
+  my_uint128_t a;
 
-  a = ((uint128_t) in[0]) * scalar;
+  a = ((my_uint128_t) in[0]) * scalar;
   output[0] = ((limb)a) & 0x7ffffffffffff;
 
-  a = ((uint128_t) in[1]) * scalar + ((limb) (a >> 51));
+  a = ((my_uint128_t) in[1]) * scalar + ((limb) (a >> 51));
   output[1] = ((limb)a) & 0x7ffffffffffff;
 
-  a = ((uint128_t) in[2]) * scalar + ((limb) (a >> 51));
+  a = ((my_uint128_t) in[2]) * scalar + ((limb) (a >> 51));
   output[2] = ((limb)a) & 0x7ffffffffffff;
 
-  a = ((uint128_t) in[3]) * scalar + ((limb) (a >> 51));
+  a = ((my_uint128_t) in[3]) * scalar + ((limb) (a >> 51));
   output[3] = ((limb)a) & 0x7ffffffffffff;
 
-  a = ((uint128_t) in[4]) * scalar + ((limb) (a >> 51));
+  a = ((my_uint128_t) in[4]) * scalar + ((limb) (a >> 51));
   output[4] = ((limb)a) & 0x7ffffffffffff;
 
   output[0] += (a >> 51) * 19;
@@ -98,7 +104,7 @@ fscalar_product(felem output, const felem in, const limb scalar) {
  */
 static void force_inline
 fmul(felem output, const felem in2, const felem in) {
-  uint128_t t[5];
+  my_uint128_t t[5];
   limb r0,r1,r2,r3,r4,s0,s1,s2,s3,s4,c;
 
   r0 = in[0];
@@ -113,21 +119,21 @@ fmul(felem output, const felem in2, const felem in) {
   s3 = in2[3];
   s4 = in2[4];
 
-  t[0]  =  ((uint128_t) r0) * s0;
-  t[1]  =  ((uint128_t) r0) * s1 + ((uint128_t) r1) * s0;
-  t[2]  =  ((uint128_t) r0) * s2 + ((uint128_t) r2) * s0 + ((uint128_t) r1) * s1;
-  t[3]  =  ((uint128_t) r0) * s3 + ((uint128_t) r3) * s0 + ((uint128_t) r1) * s2 + ((uint128_t) r2) * s1;
-  t[4]  =  ((uint128_t) r0) * s4 + ((uint128_t) r4) * s0 + ((uint128_t) r3) * s1 + ((uint128_t) r1) * s3 + ((uint128_t) r2) * s2;
+  t[0]  =  ((my_uint128_t) r0) * s0;
+  t[1]  =  ((my_uint128_t) r0) * s1 + ((my_uint128_t) r1) * s0;
+  t[2]  =  ((my_uint128_t) r0) * s2 + ((my_uint128_t) r2) * s0 + ((my_uint128_t) r1) * s1;
+  t[3]  =  ((my_uint128_t) r0) * s3 + ((my_uint128_t) r3) * s0 + ((my_uint128_t) r1) * s2 + ((my_uint128_t) r2) * s1;
+  t[4]  =  ((my_uint128_t) r0) * s4 + ((my_uint128_t) r4) * s0 + ((my_uint128_t) r3) * s1 + ((my_uint128_t) r1) * s3 + ((my_uint128_t) r2) * s2;
 
   r4 *= 19;
   r1 *= 19;
   r2 *= 19;
   r3 *= 19;
 
-  t[0] += ((uint128_t) r4) * s1 + ((uint128_t) r1) * s4 + ((uint128_t) r2) * s3 + ((uint128_t) r3) * s2;
-  t[1] += ((uint128_t) r4) * s2 + ((uint128_t) r2) * s4 + ((uint128_t) r3) * s3;
-  t[2] += ((uint128_t) r4) * s3 + ((uint128_t) r3) * s4;
-  t[3] += ((uint128_t) r4) * s4;
+  t[0] += ((my_uint128_t) r4) * s1 + ((my_uint128_t) r1) * s4 + ((my_uint128_t) r2) * s3 + ((my_uint128_t) r3) * s2;
+  t[1] += ((my_uint128_t) r4) * s2 + ((my_uint128_t) r2) * s4 + ((my_uint128_t) r3) * s3;
+  t[2] += ((my_uint128_t) r4) * s3 + ((my_uint128_t) r3) * s4;
+  t[3] += ((my_uint128_t) r4) * s4;
 
                   r0 = (limb)t[0] & 0x7ffffffffffff; c = (limb)(t[0] >> 51);
   t[1] += c;      r1 = (limb)t[1] & 0x7ffffffffffff; c = (limb)(t[1] >> 51);
@@ -147,7 +153,7 @@ fmul(felem output, const felem in2, const felem in) {
 
 static void force_inline
 fsquare_times(felem output, const felem in, limb count) {
-  uint128_t t[5];
+  my_uint128_t t[5];
   limb r0,r1,r2,r3,r4,c;
   limb d0,d1,d2,d4,d419;
 
@@ -164,11 +170,11 @@ fsquare_times(felem output, const felem in, limb count) {
     d419 = r4 * 19;
     d4 = d419 * 2;
 
-    t[0] = ((uint128_t) r0) * r0 + ((uint128_t) d4) * r1 + (((uint128_t) d2) * (r3     ));
-    t[1] = ((uint128_t) d0) * r1 + ((uint128_t) d4) * r2 + (((uint128_t) r3) * (r3 * 19));
-    t[2] = ((uint128_t) d0) * r2 + ((uint128_t) r1) * r1 + (((uint128_t) d4) * (r3     ));
-    t[3] = ((uint128_t) d0) * r3 + ((uint128_t) d1) * r2 + (((uint128_t) r4) * (d419   ));
-    t[4] = ((uint128_t) d0) * r4 + ((uint128_t) d1) * r3 + (((uint128_t) r2) * (r2     ));
+    t[0] = ((my_uint128_t) r0) * r0 + ((my_uint128_t) d4) * r1 + (((my_uint128_t) d2) * (r3     ));
+    t[1] = ((my_uint128_t) d0) * r1 + ((my_uint128_t) d4) * r2 + (((my_uint128_t) r3) * (r3 * 19));
+    t[2] = ((my_uint128_t) d0) * r2 + ((my_uint128_t) r1) * r1 + (((my_uint128_t) d4) * (r3     ));
+    t[3] = ((my_uint128_t) d0) * r3 + ((my_uint128_t) d1) * r2 + (((my_uint128_t) r4) * (d419   ));
+    t[4] = ((my_uint128_t) d0) * r4 + ((my_uint128_t) d1) * r3 + (((my_uint128_t) r2) * (r2     ));
 
                     r0 = (limb)t[0] & 0x7ffffffffffff; c = (limb)(t[0] >> 51);
     t[1] += c;      r1 = (limb)t[1] & 0x7ffffffffffff; c = (limb)(t[1] >> 51);
@@ -187,14 +193,40 @@ fsquare_times(felem output, const felem in, limb count) {
   output[4] = r4;
 }
 
+/* Load a little-endian 64-bit number  */
+static limb
+load_limb(const u8 *in) {
+  return
+    ((limb)in[0]) |
+    (((limb)in[1]) << 8) |
+    (((limb)in[2]) << 16) |
+    (((limb)in[3]) << 24) |
+    (((limb)in[4]) << 32) |
+    (((limb)in[5]) << 40) |
+    (((limb)in[6]) << 48) |
+    (((limb)in[7]) << 56);
+}
+
+static void
+store_limb(u8 *out, limb in) {
+  out[0] = in & 0xff;
+  out[1] = (in >> 8) & 0xff;
+  out[2] = (in >> 16) & 0xff;
+  out[3] = (in >> 24) & 0xff;
+  out[4] = (in >> 32) & 0xff;
+  out[5] = (in >> 40) & 0xff;
+  out[6] = (in >> 48) & 0xff;
+  out[7] = (in >> 56) & 0xff;
+}
+
 /* Take a little-endian, 32-byte number and expand it into polynomial form */
 static void
 fexpand(limb *output, const u8 *in) {
-  output[0] = *((const uint64_t *)(in)) & 0x7ffffffffffff;
-  output[1] = (*((const uint64_t *)(in+6)) >> 3) & 0x7ffffffffffff;
-  output[2] = (*((const uint64_t *)(in+12)) >> 6) & 0x7ffffffffffff;
-  output[3] = (*((const uint64_t *)(in+19)) >> 1) & 0x7ffffffffffff;
-  output[4] = (*((const uint64_t *)(in+25)) >> 4) & 0x7ffffffffffff;
+  output[0] = load_limb(in) & 0x7ffffffffffff;
+  output[1] = (load_limb(in+6) >> 3) & 0x7ffffffffffff;
+  output[2] = (load_limb(in+12) >> 6) & 0x7ffffffffffff;
+  output[3] = (load_limb(in+19) >> 1) & 0x7ffffffffffff;
+  output[4] = (load_limb(in+24) >> 12) & 0x7ffffffffffff;
 }
 
 /* Take a fully reduced polynomial form number and contract it into a
@@ -202,7 +234,7 @@ fexpand(limb *output, const u8 *in) {
  */
 static void
 fcontract(u8 *output, const felem input) {
-  uint128_t t[5];
+  my_uint128_t t[5];
 
   t[0] = input[0];
   t[1] = input[1];
@@ -249,10 +281,10 @@ fcontract(u8 *output, const felem input) {
   t[4] += t[3] >> 51; t[3] &= 0x7ffffffffffff;
   t[4] &= 0x7ffffffffffff;
 
-  *((uint64_t *)(output)) = t[0] | (t[1] << 51);
-  *((uint64_t *)(output+8)) = (t[1] >> 13) | (t[2] << 38);
-  *((uint64_t *)(output+16)) = (t[2] >> 26) | (t[3] << 25);
-  *((uint64_t *)(output+24)) = (t[3] >> 39) | (t[4] << 12);
+  store_limb(output,    t[0] | (t[1] << 51));
+  store_limb(output+8,  (t[1] >> 13) | (t[2] << 38));
+  store_limb(output+16, (t[2] >> 26) | (t[3] << 25));
+  store_limb(output+24, (t[3] >> 39) | (t[4] << 12));
 }
 
 /* Input: Q, Q', Q-Q'
@@ -337,7 +369,7 @@ cmult(limb *resultx, limb *resultz, const u8 *n, const limb *q) {
   for (i = 0; i < 32; ++i) {
     u8 byte = n[31 - i];
     for (j = 0; j < 8; ++j) {
-      const limb bit = byte >> 7;
+      const limb bit = crypto_uint8_topbit_01(byte);
 
       swap_conditional(nqx, nqpqx, bit);
       swap_conditional(nqz, nqpqz, bit);

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-benchmarkdir = 'benchmarks+s2n'
+benchmarkdir = 'benchmarks+s2n+exp'
 
 import os
 import sys

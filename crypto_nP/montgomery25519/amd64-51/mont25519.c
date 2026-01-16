@@ -1,6 +1,9 @@
+// 20240926 djb: using cryptoint
+
 #include "randombytes.h"
 #include "crypto_nP.h"
 #include "fe25519.h"
+#include "crypto_uint8.h"
 
 #define work_cswap CRYPTO_SHARED_NAMESPACE(work_cswap)
 #define ladderstep CRYPTO_SHARED_NAMESPACE(ladderstep)
@@ -27,7 +30,7 @@ static void mladder(fe25519 *xr, fe25519 *zr, const unsigned char s[32])
   {
     while(j >= 0)
     {
-      bit = 1&(s[i]>>j);
+      bit = crypto_uint8_bitmod_01(s[i],j);
       swap = bit ^ prevbit;
       prevbit = bit;
       work_cswap(work+1, swap);

@@ -1,8 +1,11 @@
+// 20240926 djb: use cryptoint
+
 // linker define fe51_invert
 // linker use fe51_pack
 
 #include "crypto_pow_inv25519.h"
 #include "fe51.h"
+#include "crypto_uint64.h"
 
 static void fe51_unpack(fe51 *r, const unsigned char x[32])
 {
@@ -29,7 +32,7 @@ static void fe51_unpack(fe51 *r, const unsigned char x[32])
   r->v[2] += (unsigned long long)x[16] << 26;
   r->v[2] += (unsigned long long)x[17] << 34;
   r->v[2] += (unsigned long long)x[18] << 42;
-  r->v[2] += ((unsigned long long)x[19] & 1) << 50;
+  r->v[2] += crypto_uint64_bottombit_01(x[19]) << 50;
   
   r->v[3] = x[19] >> 1;
   r->v[3] += (unsigned long long)x[20] <<  7;

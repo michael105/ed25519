@@ -8,9 +8,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/resource.h>
-#include "cpucycles.h" /* -lcpucycles */
-#include "lib25519.h" /* -l25519 */
-#include "randombytes.h" /* -lrandombytes */
+#include <cpucycles.h> /* -lcpucycles */
+#include <lib25519.h> /* -l25519 */
+#include <randombytes.h> /* -lrandombytes */
 
 static const char *targeto = 0;
 static const char *targetp = 0;
@@ -18,21 +18,61 @@ static const char *targeti = 0;
 
 #include "limits.inc"
 
-static unsigned char *alignedcalloc(unsigned long long len)
+static void *callocplus(long long len)
 {
-  unsigned char *x = (unsigned char *) calloc(1,len + 128);
+  void *x = calloc(1,len + 128);
   if (!x) abort();
-  /* will never deallocate so shifting is ok */
-  x += 63 & (-(unsigned long) x);
   return x;
 }
 
-#define TIMINGS 15
+static void *aligned(void *x)
+{
+  unsigned char *y = x;
+  y += 63 & (-(unsigned long) x);
+  return y;
+}
+
+static void longlong_sort(long long *x,long long n)
+{
+  long long top,p,q,r,i;
+
+  if (n < 2) return;
+  top = 1;
+  while (top < n - top) top += top;
+
+  for (p = top;p > 0;p >>= 1) {
+    for (i = 0;i < n - p;++i)
+      if (!(i & p))
+        if (x[i] > x[i+p]) {
+          long long t = x[i];
+          x[i] = x[i+p];
+          x[i+p] = t;
+        }
+    i = 0;
+    for (q = top;q > p;q >>= 1) {
+      for (;i < n - q;++i) {
+        if (!(i & p)) {
+          long long a = x[i + p];
+          for (r = q;r > p;r >>= 1)
+            if (a > x[i+r]) {
+              long long t = a;
+              a = x[i+r];
+              x[i+r] = t;
+            }
+          x[i + p] = a;
+        }
+      }
+    }
+  }
+}
+
+#define TIMINGS 32 // must be multiple of 4
 static long long t[TIMINGS+1];
 
 static void t_print(const char *op,long long impl,long long len)
 {
-  long long median = 0;
+  long long tsort[TIMINGS];
+  long long iqm = 0;
 
   printf("%s",op);
   if (impl >= 0)
@@ -41,20 +81,18 @@ static void t_print(const char *op,long long impl,long long len)
     printf(" selected");
   printf(" %lld",len);
   for (long long i = 0;i < TIMINGS;++i)
-    t[i] = t[i+1]-t[i];
-  for (long long j = 0;j < TIMINGS;++j) {
-    long long belowj = 0;
-    long long abovej = 0;
-    for (long long i = 0;i < TIMINGS;++i) if (t[i] < t[j]) ++belowj;
-    for (long long i = 0;i < TIMINGS;++i) if (t[i] > t[j]) ++abovej;
-    if (belowj*2 < TIMINGS && abovej*2 < TIMINGS) {
-      median = t[j];
-      break;
-    }
-  }
-  printf(" %lld ",median);
+    tsort[i] = t[i] = t[i+1]-t[i];
+  longlong_sort(tsort,TIMINGS);
+
+  for (long long j = TIMINGS/4;j < 3*TIMINGS/4;++j)
+    iqm += tsort[j];
+  iqm *= 2;
+  iqm += TIMINGS/2;
+  iqm /= TIMINGS;
+
+  printf(" %lld ",iqm);
   for (long long i = 0;i < TIMINGS;++i)
-    printf("%+lld",t[i]-median);
+    printf("%+lld",t[i]-iqm);
   printf("\n");
   fflush(stdout);
 }
@@ -74,7 +112,8 @@ static void measure_cpucycles(void)
 
 static void measure_randombytes(void)
 {
-  unsigned char *m = alignedcalloc(MAXTEST_BYTES);
+  void *mstorage = callocplus(MAXTEST_BYTES);
+  unsigned char *m = aligned(mstorage);
   long long mlen = 0;
 
   while (mlen < MAXTEST_BYTES) {
@@ -85,14 +124,17 @@ static void measure_randombytes(void)
     t_print("randombytes",-1,mlen);
     mlen += 1+mlen/2;
   }
+  free(mstorage);
 }
 
 static void measure_verify_32(void)
 {
   if (targeto && strcmp(targeto,"verify")) return;
   if (targetp && strcmp(targetp,"32")) return;
-  unsigned char *x = alignedcalloc(lib25519_verify_32_BYTES);
-  unsigned char *y = alignedcalloc(lib25519_verify_32_BYTES);
+  void *xstorage = callocplus(lib25519_verify_32_BYTES);
+  unsigned char *x = aligned(xstorage);
+  void *ystorage = callocplus(lib25519_verify_32_BYTES);
+  unsigned char *y = aligned(ystorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_verify_32();++impl) {
     int (*crypto_verify)(const unsigned char *,const unsigned char *);
@@ -112,14 +154,18 @@ static void measure_verify_32(void)
     }
     t_print("verify_32",impl,lib25519_verify_32_BYTES);
   }
+  free(ystorage);
+  free(xstorage);
 }
 
 static void measure_hashblocks_sha512(void)
 {
   if (targeto && strcmp(targeto,"hashblocks")) return;
   if (targetp && strcmp(targetp,"sha512")) return;
-  unsigned char *h = alignedcalloc(lib25519_hashblocks_sha512_STATEBYTES);
-  unsigned char *m = alignedcalloc(MAXTEST_BYTES);
+  void *hstorage = callocplus(lib25519_hashblocks_sha512_STATEBYTES);
+  unsigned char *h = aligned(hstorage);
+  void *mstorage = callocplus(MAXTEST_BYTES);
+  unsigned char *m = aligned(mstorage);
   long long mlen;
 
   for (long long impl = -1;impl < lib25519_numimpl_hashblocks_sha512();++impl) {
@@ -145,14 +191,18 @@ static void measure_hashblocks_sha512(void)
       mlen += 1+mlen/2;
     }
   }
+  free(mstorage);
+  free(hstorage);
 }
 
 static void measure_hash_sha512(void)
 {
   if (targeto && strcmp(targeto,"hash")) return;
   if (targetp && strcmp(targetp,"sha512")) return;
-  unsigned char *h = alignedcalloc(lib25519_hash_sha512_BYTES);
-  unsigned char *m = alignedcalloc(MAXTEST_BYTES);
+  void *hstorage = callocplus(lib25519_hash_sha512_BYTES);
+  unsigned char *h = aligned(hstorage);
+  void *mstorage = callocplus(MAXTEST_BYTES);
+  unsigned char *m = aligned(mstorage);
   long long mlen;
 
   for (long long impl = -1;impl < lib25519_numimpl_hash_sha512();++impl) {
@@ -178,14 +228,18 @@ static void measure_hash_sha512(void)
       mlen += 1+mlen/2;
     }
   }
+  free(mstorage);
+  free(hstorage);
 }
 
 static void measure_pow_inv25519(void)
 {
   if (targeto && strcmp(targeto,"pow")) return;
   if (targetp && strcmp(targetp,"inv25519")) return;
-  unsigned char *n = alignedcalloc(lib25519_pow_inv25519_BYTES);
-  unsigned char *ne = alignedcalloc(lib25519_pow_inv25519_BYTES);
+  void *nstorage = callocplus(lib25519_pow_inv25519_BYTES);
+  unsigned char *n = aligned(nstorage);
+  void *nestorage = callocplus(lib25519_pow_inv25519_BYTES);
+  unsigned char *ne = aligned(nestorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_pow_inv25519();++impl) {
     void (*crypto_pow)(unsigned char *,const unsigned char *);
@@ -205,14 +259,18 @@ static void measure_pow_inv25519(void)
     }
     t_print("pow_inv25519",impl,lib25519_pow_inv25519_BYTES);
   }
+  free(nestorage);
+  free(nstorage);
 }
 
 static void measure_powbatch_inv25519(void)
 {
   if (targeto && strcmp(targeto,"powbatch")) return;
   if (targetp && strcmp(targetp,"inv25519")) return;
-  unsigned char *n = alignedcalloc(MAXBATCH*lib25519_powbatch_inv25519_BYTES);
-  unsigned char *ne = alignedcalloc(MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+  void *nstorage = callocplus(MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+  unsigned char *n = aligned(nstorage);
+  void *nestorage = callocplus(MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+  unsigned char *ne = aligned(nestorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_powbatch_inv25519();++impl) {
     void (*crypto_powbatch)(unsigned char *,const unsigned char *,long long);
@@ -234,15 +292,20 @@ static void measure_powbatch_inv25519(void)
       t_print("powbatch_inv25519",impl,batch);
     }
   }
+  free(nestorage);
+  free(nstorage);
 }
 
 static void measure_nP_montgomery25519(void)
 {
   if (targeto && strcmp(targeto,"nP")) return;
   if (targetp && strcmp(targetp,"montgomery25519")) return;
-  unsigned char *n = alignedcalloc(lib25519_nP_montgomery25519_SCALARBYTES);
-  unsigned char *P = alignedcalloc(lib25519_nP_montgomery25519_POINTBYTES);
-  unsigned char *nP = alignedcalloc(lib25519_nP_montgomery25519_POINTBYTES);
+  void *nstorage = callocplus(lib25519_nP_montgomery25519_SCALARBYTES);
+  unsigned char *n = aligned(nstorage);
+  void *Pstorage = callocplus(lib25519_nP_montgomery25519_POINTBYTES);
+  unsigned char *P = aligned(Pstorage);
+  void *nPstorage = callocplus(lib25519_nP_montgomery25519_POINTBYTES);
+  unsigned char *nP = aligned(nPstorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_nP_montgomery25519();++impl) {
     void (*crypto_nP)(unsigned char *,const unsigned char *,const unsigned char *);
@@ -263,15 +326,21 @@ static void measure_nP_montgomery25519(void)
     }
     t_print("nP_montgomery25519",impl,lib25519_nP_montgomery25519_POINTBYTES);
   }
+  free(nPstorage);
+  free(Pstorage);
+  free(nstorage);
 }
 
 static void measure_nPbatch_montgomery25519(void)
 {
   if (targeto && strcmp(targeto,"nPbatch")) return;
   if (targetp && strcmp(targetp,"montgomery25519")) return;
-  unsigned char *n = alignedcalloc(MAXBATCH*lib25519_nPbatch_montgomery25519_SCALARBYTES);
-  unsigned char *P = alignedcalloc(MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
-  unsigned char *nP = alignedcalloc(MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+  void *nstorage = callocplus(MAXBATCH*lib25519_nPbatch_montgomery25519_SCALARBYTES);
+  unsigned char *n = aligned(nstorage);
+  void *Pstorage = callocplus(MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+  unsigned char *P = aligned(Pstorage);
+  void *nPstorage = callocplus(MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+  unsigned char *nP = aligned(nPstorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_nPbatch_montgomery25519();++impl) {
     void (*crypto_nPbatch)(unsigned char *,const unsigned char *,const unsigned char *,long long);
@@ -294,14 +363,19 @@ static void measure_nPbatch_montgomery25519(void)
       t_print("nPbatch_montgomery25519",impl,batch);
     }
   }
+  free(nPstorage);
+  free(Pstorage);
+  free(nstorage);
 }
 
 static void measure_nG_merged25519(void)
 {
   if (targeto && strcmp(targeto,"nG")) return;
   if (targetp && strcmp(targetp,"merged25519")) return;
-  unsigned char *n = alignedcalloc(lib25519_nG_merged25519_SCALARBYTES);
-  unsigned char *nG = alignedcalloc(lib25519_nG_merged25519_POINTBYTES);
+  void *nstorage = callocplus(lib25519_nG_merged25519_SCALARBYTES);
+  unsigned char *n = aligned(nstorage);
+  void *nGstorage = callocplus(lib25519_nG_merged25519_POINTBYTES);
+  unsigned char *nG = aligned(nGstorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_nG_merged25519();++impl) {
     void (*crypto_nG)(unsigned char *,const unsigned char *);
@@ -321,14 +395,18 @@ static void measure_nG_merged25519(void)
     }
     t_print("nG_merged25519",impl,lib25519_nG_merged25519_POINTBYTES);
   }
+  free(nGstorage);
+  free(nstorage);
 }
 
 static void measure_nG_montgomery25519(void)
 {
   if (targeto && strcmp(targeto,"nG")) return;
   if (targetp && strcmp(targetp,"montgomery25519")) return;
-  unsigned char *n = alignedcalloc(lib25519_nG_montgomery25519_SCALARBYTES);
-  unsigned char *nG = alignedcalloc(lib25519_nG_montgomery25519_POINTBYTES);
+  void *nstorage = callocplus(lib25519_nG_montgomery25519_SCALARBYTES);
+  unsigned char *n = aligned(nstorage);
+  void *nGstorage = callocplus(lib25519_nG_montgomery25519_POINTBYTES);
+  unsigned char *nG = aligned(nGstorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_nG_montgomery25519();++impl) {
     void (*crypto_nG)(unsigned char *,const unsigned char *);
@@ -348,16 +426,22 @@ static void measure_nG_montgomery25519(void)
     }
     t_print("nG_montgomery25519",impl,lib25519_nG_montgomery25519_POINTBYTES);
   }
+  free(nGstorage);
+  free(nstorage);
 }
 
 static void measure_mGnP_ed25519(void)
 {
   if (targeto && strcmp(targeto,"mGnP")) return;
   if (targetp && strcmp(targetp,"ed25519")) return;
-  unsigned char *mGnP = alignedcalloc(lib25519_mGnP_ed25519_OUTPUTBYTES);
-  unsigned char *m = alignedcalloc(lib25519_mGnP_ed25519_MBYTES);
-  unsigned char *n = alignedcalloc(lib25519_mGnP_ed25519_NBYTES);
-  unsigned char *P = alignedcalloc(lib25519_mGnP_ed25519_PBYTES);
+  void *mGnPstorage = callocplus(lib25519_mGnP_ed25519_OUTPUTBYTES);
+  unsigned char *mGnP = aligned(mGnPstorage);
+  void *mstorage = callocplus(lib25519_mGnP_ed25519_MBYTES);
+  unsigned char *m = aligned(mstorage);
+  void *nstorage = callocplus(lib25519_mGnP_ed25519_NBYTES);
+  unsigned char *n = aligned(nstorage);
+  void *Pstorage = callocplus(lib25519_mGnP_ed25519_PBYTES);
+  unsigned char *P = aligned(Pstorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_mGnP_ed25519();++impl) {
     void (*crypto_mGnP)(unsigned char *,const unsigned char *,const unsigned char *,const unsigned char *);
@@ -379,15 +463,22 @@ static void measure_mGnP_ed25519(void)
     }
     t_print("mGnP_ed25519",impl,lib25519_mGnP_ed25519_OUTPUTBYTES);
   }
+  free(Pstorage);
+  free(nstorage);
+  free(mstorage);
+  free(mGnPstorage);
 }
 
 static void measure_multiscalar_ed25519(void)
 {
   if (targeto && strcmp(targeto,"multiscalar")) return;
   if (targetp && strcmp(targetp,"ed25519")) return;
-  unsigned char *Q = alignedcalloc(MAXBATCH*lib25519_multiscalar_ed25519_OUTPUTBYTES);
-  unsigned char *n = alignedcalloc(MAXBATCH*lib25519_multiscalar_ed25519_SCALARBYTES);
-  unsigned char *P = alignedcalloc(MAXBATCH*lib25519_multiscalar_ed25519_POINTBYTES);
+  void *Qstorage = callocplus(MAXBATCH*lib25519_multiscalar_ed25519_OUTPUTBYTES);
+  unsigned char *Q = aligned(Qstorage);
+  void *nstorage = callocplus(MAXBATCH*lib25519_multiscalar_ed25519_SCALARBYTES);
+  unsigned char *n = aligned(nstorage);
+  void *Pstorage = callocplus(MAXBATCH*lib25519_multiscalar_ed25519_POINTBYTES);
+  unsigned char *P = aligned(Pstorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_multiscalar_ed25519();++impl) {
     void (*crypto_multiscalar)(unsigned char *,const unsigned char *,const unsigned char *,long long);
@@ -410,17 +501,25 @@ static void measure_multiscalar_ed25519(void)
       t_print("multiscalar_ed25519",impl,batch);
     }
   }
+  free(Pstorage);
+  free(nstorage);
+  free(Qstorage);
 }
 
 static void measure_dh_x25519(void)
 {
   if (targeto && strcmp(targeto,"dh")) return;
   if (targetp && strcmp(targetp,"x25519")) return;
-  unsigned char *pka = alignedcalloc(lib25519_dh_x25519_PUBLICKEYBYTES);
-  unsigned char *ska = alignedcalloc(lib25519_dh_x25519_SECRETKEYBYTES);
-  unsigned char *pkb = alignedcalloc(lib25519_dh_x25519_PUBLICKEYBYTES);
-  unsigned char *skb = alignedcalloc(lib25519_dh_x25519_SECRETKEYBYTES);
-  unsigned char *ka = alignedcalloc(lib25519_dh_x25519_BYTES);
+  void *pkastorage = callocplus(lib25519_dh_x25519_PUBLICKEYBYTES);
+  unsigned char *pka = aligned(pkastorage);
+  void *skastorage = callocplus(lib25519_dh_x25519_SECRETKEYBYTES);
+  unsigned char *ska = aligned(skastorage);
+  void *pkbstorage = callocplus(lib25519_dh_x25519_PUBLICKEYBYTES);
+  unsigned char *pkb = aligned(pkbstorage);
+  void *skbstorage = callocplus(lib25519_dh_x25519_SECRETKEYBYTES);
+  unsigned char *skb = aligned(skbstorage);
+  void *kastorage = callocplus(lib25519_dh_x25519_BYTES);
+  unsigned char *ka = aligned(kastorage);
 
   for (long long impl = -1;impl < lib25519_numimpl_dh_x25519();++impl) {
     void (*crypto_dh_keypair)(unsigned char *,unsigned char *);
@@ -452,17 +551,27 @@ static void measure_dh_x25519(void)
     }
     t_print("dh_x25519",impl,lib25519_dh_x25519_BYTES);
   }
+  free(kastorage);
+  free(skbstorage);
+  free(pkbstorage);
+  free(skastorage);
+  free(pkastorage);
 }
 
 static void measure_sign_ed25519(void)
 {
   if (targeto && strcmp(targeto,"sign")) return;
   if (targetp && strcmp(targetp,"ed25519")) return;
-  unsigned char *pk = alignedcalloc(lib25519_sign_ed25519_PUBLICKEYBYTES);
-  unsigned char *sk = alignedcalloc(lib25519_sign_ed25519_SECRETKEYBYTES);
-  unsigned char *m = alignedcalloc(MAXTEST_BYTES+lib25519_sign_ed25519_BYTES);
-  unsigned char *sm = alignedcalloc(MAXTEST_BYTES+lib25519_sign_ed25519_BYTES);
-  unsigned char *m2 = alignedcalloc(MAXTEST_BYTES+lib25519_sign_ed25519_BYTES);
+  void *pkstorage = callocplus(lib25519_sign_ed25519_PUBLICKEYBYTES);
+  unsigned char *pk = aligned(pkstorage);
+  void *skstorage = callocplus(lib25519_sign_ed25519_SECRETKEYBYTES);
+  unsigned char *sk = aligned(skstorage);
+  void *mstorage = callocplus(MAXTEST_BYTES+lib25519_sign_ed25519_BYTES);
+  unsigned char *m = aligned(mstorage);
+  void *smstorage = callocplus(MAXTEST_BYTES+lib25519_sign_ed25519_BYTES);
+  unsigned char *sm = aligned(smstorage);
+  void *m2storage = callocplus(MAXTEST_BYTES+lib25519_sign_ed25519_BYTES);
+  unsigned char *m2 = aligned(m2storage);
   long long mlen;
   long long smlen;
   long long m2len;
@@ -519,6 +628,11 @@ static void measure_sign_ed25519(void)
       mlen += 1+mlen/4;
     }
   }
+  free(m2storage);
+  free(smstorage);
+  free(mstorage);
+  free(skstorage);
+  free(pkstorage);
 }
 
 #include "print_cpuid.inc"

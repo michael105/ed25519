@@ -18,6 +18,7 @@ prefix = '/usr/local'
 clean = True
 trim = True
 tryifunc = True
+valgrind = True
 darwin = platform.system() == 'Darwin'
 
 def hostsanitize(host):
@@ -35,7 +36,7 @@ def hostsanitize(host):
     ('ppc64','ppc64'), ('powerpc64','ppc64'),
     ('powerpc','ppc32'),
     ('ppc','ppc32'),
-    ('sparc64','sparc64'), ('sparcv9','sparc64'), ('sun4u','sparc64'),
+    ('sparc64','sparc64'), ('sparcv9','sparc64'), ('sun4u','sparc64'), ('sun4v','sparc64'),
     ('sparc','sparc32'), ('sun','sparc32'),
   ):
     if host.startswith(prefix): return result
@@ -62,26 +63,32 @@ for arg in sys.argv[1:]:
   if arg == '--clean':
     clean = True
     continue
-  if arg == '--noclean':
+  if arg == '--no-clean':
     clean = False
     continue
   if arg == '--trim':
     trim = True
     continue
-  if arg == '--notrim':
+  if arg == '--no-trim':
     trim = False
     continue
   if arg == '--tryifunc':
     tryifunc = True
     continue
-  if arg == '--notryifunc':
+  if arg == '--no-tryifunc':
     tryifunc = False
     continue
   if arg == '--darwin':
     darwin = True
     continue
-  if arg == '--nodarwin':
+  if arg == '--no-darwin':
     darwin = False
+    continue
+  if arg == '--valgrind':
+    valgrind = True
+    continue
+  if arg == '--no-valgrind':
+    valgrind = False
     continue
   raise ValueError('unrecognized argument %s' % arg)
 
@@ -89,13 +96,15 @@ echoargs = './configure'
 echoargs += ' --prefix=%s' % prefix
 echoargs += ' --host=%s' % host
 if clean: echoargs += ' --clean'
-if not clean: echoargs += ' --noclean'
+if not clean: echoargs += ' --no-clean'
 if trim: echoargs += ' --trim'
-if not trim: echoargs += ' --notrim'
+if not trim: echoargs += ' --no-trim'
 if tryifunc: echoargs += ' --tryifunc'
-if not tryifunc: echoargs += ' --notryifunc'
+if not tryifunc: echoargs += ' --no-tryifunc'
 if darwin: echoargs += ' --darwin'
-if not darwin: echoargs += ' --nodarwin'
+if not darwin: echoargs += ' --no-darwin'
+if valgrind: echoargs += ' --valgrind'
+if not valgrind: echoargs += ' --no-valgrind'
 log(echoargs)
 
 if prefix[0] != '/':
@@ -153,7 +162,10 @@ shutil.copy2('api','build/%s/api' % host)
 copytree('scripts-build','build/%s/scripts' % host)
 copytree('cpuid','build/%s/cpuid' % host)
 copytree('priority','build/%s/priority' % host)
-copytree('include-build','build/%s/include-build' % host)
+if valgrind:
+  copytree('include-build-valgrind','build/%s/include-build' % host)
+else:
+  copytree('include-build','build/%s/include-build' % host)
 
 with open('project/namespace') as f:
   projectnamespace = f.read().strip()
@@ -173,18 +185,38 @@ with open(f'build/{host}/scripts/sharedlib-soname','w') as f:
 with open(f'build/{host}/scripts/sharedlib-opts','w') as f:
   f.write(sharedlibopts+'\n')
 
-# ----- inttypes
+# ----- cryptoint
 
-with open('inttypes/crypto_intN.h') as f:
-  intN = f.read()
-with open('inttypes/crypto_uintN.h') as f:
-  uintN = f.read()
+os.makedirs(f'build/{host}/cryptoint',exist_ok=True)
+dirlinksym(f'build/{host}/cryptoint','include-build','../include-build')
 
-for bits in 8,16,32,64:
-  with open('build/%s/include-build/crypto_int%d.h' % (host,bits),'w') as f:
-    f.write(re.sub('N',str(bits),intN))
-  with open('build/%s/include-build/crypto_uint%d.h' % (host,bits),'w') as f:
-    f.write(re.sub('N',str(bits),uintN))
+cryptoint_dep = []
+
+def cryptoint_h(fn):
+  if 'N' in fn: return False
+  return fn.endswith('.h')
+
+def cryptoint_c(fn):
+  global makefile
+  global cryptoint_dep
+  if 'N' in fn: return False
+  if not fn.endswith('.c'): return False
+  basename = fn[:-2]
+  obj = basename+'.o'
+  M = '\n'
+  M += f'cryptoint/{obj}: cryptoint/{fn}\n'
+  M += f'\tscripts/compiledefault cryptoint {basename} c -I include-build\n'
+  makefile += M
+  cryptoint_dep += [f'cryptoint/{obj}']
+  return True
+
+copytree('cryptoint',f'build/{host}/include-build',cryptoint_h)
+copytree('cryptoint',f'build/{host}/cryptoint',cryptoint_c)
+
+M = '\n'
+M += 'cryptoint-all: \\\n%s\n' % '\\\n'.join(cryptoint_dep)
+M += '\ttouch cryptoint-all\n'
+makefile += M
 
 # ----- compilers
 
@@ -437,7 +469,7 @@ for o in operations:
     result += re.sub('crypto_%s_%s_'%(o,p),'crypto_%s_'%o,sizes[o,p])
     result += '\n'
     for rettype,fun,args in prototypes[o]:
-      result += 'extern %s %s(%s) __attribute__((visibility("default")));\n' % (rettype,'_'.join(fun),args)
+      result += 'extern %s %s(%s);\n' % (rettype,'_'.join(fun),args)
     result += '\n'
     result += '#endif\n'
     doth[o,p] = result
@@ -793,27 +825,58 @@ for o in operations:
             with open(builddir+'/dependencies','w') as f:
               f.write('\n'.join(dependencies))
 
+# ----- compilerdirs
+
+compilerdirs = {}
+for o in operations:
+  for p in primitives[o]:
+    for i,impldir,implarch in impls[o,p]:
+      for fn in sorted(os.listdir(impldir)):
+        if not acceptfn_shared(fn): continue
+        if not (fn.endswith('.S') or fn.endswith('.c')): continue
+        if fn in unified_files[o,p,i]:
+          c = checksum(impldir,fn)
+          builddir = checksum_unified[c]+'/shared'
+        else:
+          builddir = f'{o}/{p}/{i}/shared'
+        for arch in compilers:
+          if any(implarchreq not in arch.split('+')[1:] for implarchreq in implarch[1:]):
+            continue
+          for compiler in compilers[arch]:
+            compilerdir = compilerabbrev[arch,compiler]
+            if builddir not in compilerdirs:
+              compilerdirs[builddir] = []
+            compilerdirs[builddir] += [compilerdir]
+
+for builddir in compilerdirs:
+  with open(f'build/{host}/{builddir}/compilerdirs','w') as f:
+    for sharedcompilerdir in sorted(set(compilerdirs[builddir])):
+      f.write(sharedcompilerdir+'\n')
+
 # ----- dispatch
 
 with open('build/%s/opicdirs'%host,'w') as f:
   for opicdir in opicdirs:
     f.write(opicdir+'\n')
 
+with open('build/%s/builddirs'%host,'w') as f:
+  for builddir in builddirs:
+    f.write(builddir+'\n')
+
 M = ''
 
-M += 'compiledimplementations: opicdirs scripts/compiledimplementations result-impl \\\n'
+M += 'compiledimplementations: opicdirs scripts/compiledimplementations \\\n'
 for opicdir in opicdirs:
   M += '%s/allcompiled \\\n' % opicdir
 M += '\n'
 M += '\tscripts/compiledimplementations < opicdirs > compiledimplementations\n'
-M += '\tcat result-impl\n'
 M += '\n'
 
 M += 'result-impl: \\\n'
-for opicdir in opicdirs:
-  M += '%s/result \\\n' % opicdir
+for builddir in builddirs:
+  M += '%s/result \\\n' % builddir
 M += '\n'
-M += '\tscripts/result-impl < opicdirs > result-impl\n'
+M += '\tscripts/result-impl < builddirs > result-impl\n'
 M += '\n'
 
 for opicdir in opicdirs:
@@ -839,27 +902,27 @@ for builddir in builddirs:
   M += '\ttouch %s/allcompiled\n' % builddir
   M += '\n'
 
-for opicdir in opicdirs:
-  deps = [opicdir+'/result-namespace',opicdir+'/result-insns']
-  deps += builddir_ofiles[opicdir]
+for builddir in builddirs:
+  deps = [builddir+'/result-namespace',builddir+'/result-insns']
+  deps += builddir_ofiles[builddir]
   deps = ' '.join(deps)
-  results = [opicdir+'/result-namespace',opicdir+'/result-insns']
-  for ofile in builddir_ofiles[opicdir]:
+  results = [builddir+'/result-namespace',builddir+'/result-insns']
+  for ofile in builddir_ofiles[builddir]:
     ofile = '/'.join(ofile.split('/')[4:])
-    results += [opicdir+'/result-compile-'+ofile[:-2]]
+    results += [builddir+'/result-compile-'+ofile[:-2]]
   results = ' '.join(results)
-  M += '%s/result: %s\n' % (opicdir,deps)
-  M += '\tcat %s > %s/result\n' % (results,opicdir)
+  M += '%s/result: %s\n' % (builddir,deps)
+  M += '\tcat %s > %s/result\n' % (results,builddir)
   M += '\n'
 
-for opicdir in opicdirs:
-  M += '%s/result-insns: %s/allcompiled scripts/checkinsns\n' % (opicdir,opicdir)
-  M += '\tscripts/checkinsns %s %s\n' % (host,opicdir)
+for builddir in builddirs:
+  M += '%s/result-insns: %s/allcompiled scripts/checkinsns\n' % (builddir,builddir)
+  M += '\tscripts/checkinsns %s %s\n' % (host,builddir)
   M += '\n'
 
-for opicdir in opicdirs:
-  M += '%s/result-namespace: %s/allcompiled scripts/checknamespace\n' % (opicdir,opicdir)
-  M += '\tscripts/checknamespace %s %s\n' % (projectnamespace,opicdir)
+for builddir in builddirs:
+  M += '%s/result-namespace: %s/allcompiled scripts/checknamespace\n' % (builddir,builddir)
+  M += '\tscripts/checknamespace %s %s\n' % (projectnamespace,builddir)
   M += '\n'
 
 makefile = M + makefile
@@ -910,11 +973,11 @@ for goal in 'auto','manual':
 # ----- projectlibrary
 
 M = 'odirs: usedimplementations\n'
-M += '\t( cat usedimplementations; echo dispatch-auto; echo dispatch-manual; echo compilers; echo cpuid ) > odirs\n'
+M += '\t( cat usedimplementations; echo dispatch-auto; echo dispatch-manual; echo compilers; echo cpuid; echo cryptoint ) > odirs\n'
 M += '\n'
 makefile = M + makefile
 
-M = 'ofiles: scripts/ofiles odirs usedimplementations dispatch-auto-all dispatch-manual-all compilers-all cpuid-all\n'
+M = 'ofiles: scripts/ofiles odirs usedimplementations dispatch-auto-all dispatch-manual-all compilers-all cpuid-all cryptoint-all\n'
 M += '\tscripts/ofiles < odirs\n'
 M += '\n'
 makefile = M + makefile
@@ -965,40 +1028,62 @@ with open('build/%s/command/link' % host,'w') as f:
   f.write('  -o "$target" "$@"\n')
 os.chmod('build/%s/command/link' % host,0o755)
 
+subroutines = {}
 commands = []
 
-for fn in sorted(os.listdir('command')):
-  if not fn.endswith('.c'): continue
+for subroutine in True,False:
+  for fn in sorted(os.listdir('command')):
+    if not fn.endswith('.c'): continue
+    if subroutine != ('_' in fn): continue
 
-  base = fn[:-2]
-  deps = 'command/%s.o'%base
-  link = 'cd command && ./link bin/%s %s.o'%(base,base)
-  syslink = ''
+    base = fn[:-2]
 
-  with open('command/%s' % fn) as f:
-    for line in f:
-      line = line.strip().split()
-      if len(line) < 1: continue
-      if line[0] != '#include': continue
-      if '-lcpucycles' in line:
-        syslink += ' -lcpucycles'
-      if '-lrandombytes' in line:
-        syslink += ' -lrandombytes'
-      if '-l%s'%projectlibrary in line:
-        deps += f' package/lib/lib{projectlibrary}.{so}'
-        link += f' lib/lib{projectlibrary}.{so}'
+    M = 'command/%s.o: command/%s.c\n' % (base,base)
+    M += '\tscripts/compiledefault command %s c -I include -I include-build\n' % base
+    M += '\n'
+    makefile = M + makefile
 
-  link += syslink
+    if subroutine:
+      caller = fn.split('_')[0]
+      if caller not in subroutines: subroutines[caller] = []
+      subroutines[caller] += [base]
 
-  M = 'command/%s.o: command/%s.c\n' % (base,base)
-  M += '\tscripts/compiledefault command %s c -I include -I include-build\n' % base
-  M += '\n'
-  makefile = M + makefile
-  M = 'package/bin/%s: %s\n' % (base,deps)
-  M += '\t%s\n' % link
-  M += '\n'
-  makefile = M + makefile
-  commands += ['package/bin/%s' % base]
+    else:
+      deps = 'command/%s.o'%base
+      link = 'cd command && ./link bin/%s %s.o'%(base,base)
+      syslink = ''
+
+      if base in subroutines:
+        for subbase in subroutines[base]:
+          deps += f' \\\ncommand/{subbase}.o'
+          link += f' \\\n{subbase}.o'
+
+      with open('command/%s' % fn) as f:
+        for line in f:
+          line = line.strip().split()
+          if len(line) < 1: continue
+          if line[0] != '#include': continue
+          if '-lcpucycles' in line:
+            syslink += ' -lcpucycles'
+          if '-lrandombytes' in line:
+            syslink += ' -lrandombytes'
+          if '-l%s'%projectlibrary in line:
+            deps += f' \\\npackage/lib/lib{projectlibrary}.{so}'
+            link += f' \\\nlib/lib{projectlibrary}.{so}'
+
+      link += syslink
+
+      M = 'package/bin/%s: %s\n' % (base,deps)
+      M += '\t%s\n' % link
+      M += '\n'
+      makefile = M + makefile
+      commands += ['package/bin/%s' % base]
+
+M = f'package/bin/{projectnamespace}-fulltest: scripts/fulltest-convert scripts/fulltest-top usedimplementations\n'
+M += f'\tscripts/fulltest-convert {projectnamespace} < usedimplementations > package/bin/{projectnamespace}-fulltest\n'
+M += '\n'
+makefile = M + makefile
+commands += [f'package/bin/{projectnamespace}-fulltest']
 
 M = 'commands: %s\n' % ' '.join(commands)
 M += '\n'
@@ -1022,7 +1107,8 @@ makefile = M + makefile
 # ----- make default
 
 M = f'default: package/lib/lib{projectlibrary}.a package/lib/lib{projectlibrary}.{so} package/lib/lib{projectlibrary}.{so1} \\\n'
-M += 'commands\n'
+M += 'commands result-impl\n'
+M += '\tcat result-impl\n'
 M += '\n'
 makefile = M + makefile
 

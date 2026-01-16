@@ -1,7 +1,10 @@
+// 20240926 djb: use cryptoint
+
 // linker define fe_isnegative
 // linker use fe_tobytes
 
 #include "fe.h"
+#include "crypto_uint8.h"
 
 /*
 return 1 if f is in {1,3,5,...,q-2}
@@ -15,5 +18,5 @@ int fe_isnegative(const fe f)
 {
   unsigned char s[32];
   fe_tobytes(s,f);
-  return s[0] & 1;
+  return crypto_uint8_bottombit_01(s[0]);
 }

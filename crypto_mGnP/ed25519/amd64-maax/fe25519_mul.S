@@ -150,3 +150,4 @@ CRYPTO_SHARED_NAMESPACE(fe25519_mul):
 	movq    %r11,%rsp
 
 	ret
+.section	.note.GNU-stack,"",@progbits

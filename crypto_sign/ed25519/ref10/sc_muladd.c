@@ -1,3 +1,5 @@
+// 20240926 djb: use crypto_int64_shlmod
+
 // linker define sc_muladd
 
 #include "sc.h"
@@ -342,7 +344,7 @@ void sc_muladd(unsigned char *s,const unsigned char *a,const unsigned char *b,co
   s[4] = s1 >> 11;
   s[5] = (s1 >> 19) | (s2 << 2);
   s[6] = s2 >> 6;
-  s[7] = (s2 >> 14) | (s3 << 7);
+  s[7] = (s2 >> 14) | crypto_int64_shlmod(s3,7);
   s[8] = s3 >> 1;
   s[9] = s3 >> 9;
   s[10] = (s3 >> 17) | (s4 << 4);
@@ -363,7 +365,7 @@ void sc_muladd(unsigned char *s,const unsigned char *a,const unsigned char *b,co
   s[25] = s9 >> 11;
   s[26] = (s9 >> 19) | (s10 << 2);
   s[27] = s10 >> 6;
-  s[28] = (s10 >> 14) | (s11 << 7);
+  s[28] = (s10 >> 14) | crypto_int64_shlmod(s11,7);
   s[29] = s11 >> 1;
   s[30] = s11 >> 9;
   s[31] = s11 >> 17;

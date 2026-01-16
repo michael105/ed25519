@@ -1,5 +1,8 @@
+// 20240926 djb: using cryptoint
+
 #include "crypto_nP.h"
 #include "fe.h"
+#include "crypto_uint8.h"
 
 void crypto_nP(unsigned char *q,
   const unsigned char *n,
@@ -31,8 +34,7 @@ void crypto_nP(unsigned char *q,
 
   swap = 0;
   for (pos = 254;pos >= 0;--pos) {
-    b = e[pos / 8] >> (pos & 7);
-    b &= 1;
+    b = crypto_uint8_bitmod_01(e[pos / 8],pos);
     swap ^= b;
     fe_cswap(x2,x3,swap);
     fe_cswap(z2,z3,swap);

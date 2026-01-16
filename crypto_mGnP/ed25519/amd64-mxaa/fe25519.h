@@ -7,7 +7,7 @@
 #define fe25519_pack           CRYPTO_NAMESPACE(fe25519_pack)
 #define fe25519_iszero_vartime CRYPTO_NAMESPACE(fe25519_iszero_vartime)
 #define fe25519_iseq_vartime   CRYPTO_NAMESPACE(fe25519_iseq_vartime)
-#define fe25519_cmov           CRYPTO_NAMESPACE(fe25519_cmov)
+#define fe25519_cmov           CRYPTO_SHARED_NAMESPACE(fe25519_cmov)
 #define fe25519_setint         CRYPTO_NAMESPACE(fe25519_setint)
 #define fe25519_neg            CRYPTO_NAMESPACE(fe25519_neg)
 #define fe25519_getparity      CRYPTO_NAMESPACE(fe25519_getparity)

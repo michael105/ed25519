@@ -145,3 +145,4 @@ movq 	48(%rsp),%rbx
 movq 	%r11,%rsp
 
 ret
+.section	.note.GNU-stack,"",@progbits

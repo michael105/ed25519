@@ -162,6 +162,7 @@ def extok(arch,ext):
   if ext == 'avx2': return 'avx2' in arch
   if ext == 'avx512f': return 'avx512f' in arch
   if ext == 'avx512vl': return 'avx512vl' in arch
+  if ext == 'avx512dq': return 'avx512dq' in arch
   if ext == 'avx512ifma': return 'avx512ifma' in arch
   # XXX: could test for vaes, but not actually interested in using it
   # XXX: could test for waitpkg, but not actually interested in using it
@@ -206,11 +207,19 @@ def doit(d):
     return
 
   objs = dir2objs(d)
+  if len(objs) == 0: return
 
   if len(d.split('/')) < 4:
-    arch = host # no instruction-set extensions allowed
+    archlist = [host] # no instruction-set extensions allowed
   else:
-    arch = carch[d.split('/')[3]]
+    compiler = d.split('/')[3]
+    if compiler in carch:
+      archlist = [carch[compiler]]
+    else:
+      archlist = []
+      with open(d+'/compilerdirs') as f:
+        for arch in f:
+          archlist += [carch[arch.strip()]]
 
   try:
     # XXX: in principle should inspect raw insns for, e.g., EVEX vs. VEX
@@ -231,7 +240,8 @@ def doit(d):
             line = line[:line.index('#')]
           if '<' in line:
             line = line[:line.index('<')]
-          checkinsn(obj,arch,line)
+          for arch in archlist:
+            checkinsn(obj,arch,line)
   except Exception as e:
     warn('objdump failure: %s' % e)
 

@@ -18,7 +18,7 @@ void crypto_mGnP(
   sc25519 n_internal;
   signed char n_slide[256];
   ge25519 P_internal;
-  ge25519_pniels __attribute__ ((aligned(32))) P_multiples[P_MULTIPLES];
+  ge25519_pniels CRYPTO_ALIGN(32) P_multiples[P_MULTIPLES];
   ge25519_p3 result;
   int ok;
 

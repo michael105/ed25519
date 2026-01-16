@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include "crypto_pow.h"
 
-static const __attribute__((aligned(32)))
+static const CRYPTO_ALIGN(32)
 int64_t table[72] = {
   19LL, 19LL, 19LL, 19LL,
   0LL, 19LL, 0LL, 19LL,

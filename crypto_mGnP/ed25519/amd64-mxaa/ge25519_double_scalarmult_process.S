@@ -98,31 +98,31 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	
 .L3:	
 	/* dbl p1p1 */
-
+	
 	// square
-	movq    0(%rdi),%rdx
+	movq    64(%rdi),%rdx
 	    
-	mulx    8(%rdi),%r9,%r10
-	mulx    16(%rdi),%rcx,%r11
+	mulx    72(%rdi),%r9,%r10
+	mulx    80(%rdi),%rcx,%r11
 	addq    %rcx,%r10
 
-	mulx    24(%rdi),%rcx,%r12
+	mulx    88(%rdi),%rcx,%r12
 	adcq    %rcx,%r11
 	adcq    $0,%r12
 
-	movq    8(%rdi),%rdx
+	movq    72(%rdi),%rdx
 
-	mulx    16(%rdi),%rax,%rbx
-	mulx    24(%rdi),%rcx,%r13
+	mulx    80(%rdi),%rax,%rbx
+	mulx    88(%rdi),%rcx,%r13
 	addq    %rcx,%rbx
 	adcq    $0,%r13
 
 	addq    %rax,%r11
 	adcq    %rbx,%r12
 
-	movq    16(%rdi),%rdx
+	movq    80(%rdi),%rdx
 
-	mulx    24(%rdi),%rax,%r14
+	mulx    88(%rdi),%rax,%r14
 
 	adcq    %rax,%r13
 	adcq    $0,%r14
@@ -136,21 +136,21 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	shld    $1,%r9,%r10
 	shlq    $1,%r9
 
-	movq    0(%rdi),%rdx
+	movq    64(%rdi),%rdx
 	mulx    %rdx,%r8,%rax
 	addq    %rax,%r9
 
-	movq    8(%rdi),%rdx
+	movq    72(%rdi),%rdx
 	mulx    %rdx,%rax,%rbx
 	adcq    %rax,%r10
 	adcq    %rbx,%r11
 
-	movq    16(%rdi),%rdx
+	movq    80(%rdi),%rdx
 	mulx    %rdx,%rax,%rbx
 	adcq    %rax,%r12
 	adcq    %rbx,%r13
 
-	movq    24(%rdi),%rdx
+	movq    88(%rdi),%rdx
 	mulx    %rdx,%rax,%rbx
 	adcq    %rax,%r14
 	adcq    %rbx,%r15
@@ -174,11 +174,18 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	adcq    %r15,%r11
 	adcq    $0,%rcx
 	
-	movq    %r8,112(%rsp)
-	movq    %r9,120(%rsp)
-	movq    %r10,128(%rsp)
-	movq    %r11,136(%rsp)
-	movq    %rcx,144(%rsp)
+	// double
+	addq    %r8,%r8
+	adcq 	%r9,%r9
+	adcq	%r10,%r10
+	adcq 	%r11,%r11
+	adcq 	%rcx,%rcx
+	
+	movq    %r8,192(%rsp)
+	movq    %r9,200(%rsp)
+	movq    %r10,208(%rsp)
+	movq    %r11,216(%rsp)	
+	movq    %rcx,224(%rsp)	
 	
 	// square
 	movq    32(%rdi),%rdx
@@ -262,29 +269,29 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	movq    %rcx,184(%rsp)	
 	
 	// square
-	movq    64(%rdi),%rdx
+	movq    0(%rdi),%rdx
 	    
-	mulx    72(%rdi),%r9,%r10
-	mulx    80(%rdi),%rcx,%r11
+	mulx    8(%rdi),%r9,%r10
+	mulx    16(%rdi),%rcx,%r11
 	addq    %rcx,%r10
 
-	mulx    88(%rdi),%rcx,%r12
+	mulx    24(%rdi),%rcx,%r12
 	adcq    %rcx,%r11
 	adcq    $0,%r12
 
-	movq    72(%rdi),%rdx
+	movq    8(%rdi),%rdx
 
-	mulx    80(%rdi),%rax,%rbx
-	mulx    88(%rdi),%rcx,%r13
+	mulx    16(%rdi),%rax,%rbx
+	mulx    24(%rdi),%rcx,%r13
 	addq    %rcx,%rbx
 	adcq    $0,%r13
 
 	addq    %rax,%r11
 	adcq    %rbx,%r12
 
-	movq    80(%rdi),%rdx
+	movq    16(%rdi),%rdx
 
-	mulx    88(%rdi),%rax,%r14
+	mulx    24(%rdi),%rax,%r14
 
 	adcq    %rax,%r13
 	adcq    $0,%r14
@@ -298,21 +305,21 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	shld    $1,%r9,%r10
 	shlq    $1,%r9
 
-	movq    64(%rdi),%rdx
+	movq    0(%rdi),%rdx
 	mulx    %rdx,%r8,%rax
 	addq    %rax,%r9
 
-	movq    72(%rdi),%rdx
+	movq    8(%rdi),%rdx
 	mulx    %rdx,%rax,%rbx
 	adcq    %rax,%r10
 	adcq    %rbx,%r11
 
-	movq    80(%rdi),%rdx
+	movq    16(%rdi),%rdx
 	mulx    %rdx,%rax,%rbx
 	adcq    %rax,%r12
 	adcq    %rbx,%r13
 
-	movq    88(%rdi),%rdx
+	movq    24(%rdi),%rdx
 	mulx    %rdx,%rax,%rbx
 	adcq    %rax,%r14
 	adcq    %rbx,%r15
@@ -335,95 +342,41 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	adcq    %r14,%r10
 	adcq    %r15,%r11
 	adcq    $0,%rcx
-
-	shld    $1,%r11,%rcx
-	andq	mask63(%rip),%r11
-
-	imul    $19,%rcx,%rcx
-	addq    %rcx,%r8
-	adcq    $0,%r9
-	adcq    $0,%r10
-	adcq    $0,%r11
 	
-	// double
-	addq    %r8,%r8
-	adcq 	%r9,%r9
-	adcq	%r10,%r10
-	adcq 	%r11,%r11
-	
-	movq  	$0,%rdx
-	movq  	$38,%rcx
-	cmovae	%rdx,%rcx
-
-	addq  	%rcx,%r8
-	adcq 	%rdx,%r9
-	adcq 	%rdx,%r10
-	adcq 	%rdx,%r11
-
-	cmovc 	%rcx,%rdx
-	addq  	%rdx,%r8
-	
-	movq    %r8,192(%rsp)
-	movq    %r9,200(%rsp)
-	movq    %r10,208(%rsp)
-	movq    %r11,216(%rsp)
-	
-	// neg
-	movq    twoexp8_p0(%rip),%r8
-	movq    twoexp8_p123(%rip),%r9
-	movq    twoexp8_p123(%rip),%r10
-	movq    twoexp8_p123(%rip),%r11
-	movq    twoexp8_p4(%rip),%rax
-
-	subq    112(%rsp),%r8
-	sbbq    120(%rsp),%r9
-	sbbq    128(%rsp),%r10
-	sbbq    136(%rsp),%r11
-	sbbq    144(%rsp),%rax
-
 	movq    %r8,112(%rsp)
 	movq    %r9,120(%rsp)
 	movq    %r10,128(%rsp)
 	movq    %r11,136(%rsp)
-	movq    %rax,144(%rsp)	
-
-	// copy
-	movq    %r8,%r12
-	movq    %r9,%r13
-	movq    %r10,%r14
-	movq    %r11,%r15
-	movq    %rax,%rbx	
+	movq    %rcx,144(%rsp)	
 	
-	// sub
-	subq    152(%rsp),%r8
-	sbbq    160(%rsp),%r9
-	sbbq    168(%rsp),%r10
-	sbbq    176(%rsp),%r11
-	sbbq    184(%rsp),%rax
-
-	shld    $1,%r11,%rax
-	andq	mask63(%rip),%r11
-
-	imul    $19,%rax,%rax
-	addq    %rax,%r8
-	adcq    $0,%r9
-	adcq    $0,%r10
-	adcq    $0,%r11	
+	// neg
+	movq    twoexp8_p0(%rip),%r12
+	movq    twoexp8_p123(%rip),%r13
+	movq    twoexp8_p123(%rip),%r14
+	movq    twoexp8_p123(%rip),%r15
+	movq    twoexp8_p4(%rip),%rbx
 	
-	movq    %r8,328(%rsp)
-	movq    %r9,336(%rsp)
-	movq    %r10,344(%rsp)
-	movq    %r11,352(%rsp)	
-
+	subq    %r8,%r12
+	sbbq    %r9,%r13
+	sbbq    %r10,%r14
+	sbbq    %r11,%r15
+	sbbq    %rcx,%rbx
+	
 	// add
 	addq    152(%rsp),%r12
 	adcq    160(%rsp),%r13
 	adcq    168(%rsp),%r14
 	adcq    176(%rsp),%r15
-	adcq    184(%rsp),%rbx	
-
+	adcq    184(%rsp),%rbx
+	
+	movq    %r12,%r8
+	movq    %r13,%r9
+	movq    %r14,%r10
+	movq    %r15,%r11
+	movq    %rbx,%rcx	
+	
 	shld    $1,%r15,%rbx
-	andq	mask63(%rip),%r15
+	andq    mask63(%rip),%r15
 
 	imul    $19,%rbx,%rbx
 	addq    %rbx,%r12
@@ -435,29 +388,61 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	movq    %r13,304(%rsp)
 	movq    %r14,312(%rsp)
 	movq    %r15,320(%rsp)
-
-	// sub
-	subq    192(%rsp),%r12
-	sbbq    200(%rsp),%r13
-	sbbq    208(%rsp),%r14
-	sbbq    216(%rsp),%r15
 	
-	movq    $0,%rdx
-	movq    $38,%rax
-	cmovae  %rdx,%rax
+	// sub
+	subq    192(%rsp),%r8
+	sbbq    200(%rsp),%r9
+	sbbq    208(%rsp),%r10
+	sbbq    216(%rsp),%r11
+	sbbq    224(%rsp),%rcx
 
-	subq    %rax,%r12
-	sbbq    %rdx,%r13
-	sbbq    %rdx,%r14
-	sbbq    %rdx,%r15
+	shld    $1,%r11,%rcx
+	andq    mask63(%rip),%r11
 
-	cmovc   %rax,%rdx
-	subq    %rdx,%r12
-		
-	movq    %r12,360(%rsp)
-	movq    %r13,368(%rsp)
-	movq    %r14,376(%rsp)
-	movq    %r15,384(%rsp)
+	imul    $19,%rcx,%rcx
+	addq    %rcx,%r8
+	adcq    $0,%r9
+	adcq    $0,%r10
+	adcq    $0,%r11	
+	
+	movq    %r8,360(%rsp)
+	movq    %r9,368(%rsp)
+	movq    %r10,376(%rsp)
+	movq    %r11,384(%rsp)				
+
+	// neg
+	movq    twoexp8_p0(%rip),%r12
+	movq    twoexp8_p123(%rip),%r13
+	movq    twoexp8_p123(%rip),%r14
+	movq    twoexp8_p123(%rip),%r15
+	movq    twoexp8_p4(%rip),%rbx	
+
+	subq    152(%rsp),%r12
+	sbbq    160(%rsp),%r13
+	sbbq    168(%rsp),%r14
+	sbbq    176(%rsp),%r15
+	sbbq    184(%rsp),%rbx
+	
+	// sub
+	subq    112(%rsp),%r12
+	sbbq    120(%rsp),%r13
+	sbbq    128(%rsp),%r14
+	sbbq    136(%rsp),%r15
+	sbbq    144(%rsp),%rbx
+	
+	shld    $1,%r15,%rbx
+	andq    mask63(%rip),%r15
+
+	imul    $19,%rbx,%rbx
+	addq    %rbx,%r12
+	adcq    $0,%r13
+	adcq    $0,%r14
+	adcq    $0,%r15			
+
+	movq    %r12,328(%rsp)
+	movq    %r13,336(%rsp)
+	movq    %r14,344(%rsp)
+	movq    %r15,352(%rsp)
 
 	// add
 	movq    0(%rdi),%rbx
@@ -558,25 +543,12 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	adcq    $0,%rcx
 
 	// add
-	addq    112(%rsp),%r8
-	adcq    120(%rsp),%r9
-	adcq    128(%rsp),%r10
-	adcq    136(%rsp),%r11
-	adcq    144(%rsp),%rcx
-
-	// sub
-	addq    twoexp8_p0(%rip),%r8
-	adcq    twoexp8_p123(%rip),%r9
-	adcq    twoexp8_p123(%rip),%r10
-	adcq    twoexp8_p123(%rip),%r11
-	adcq    twoexp8_p4(%rip),%rcx
-		
-	subq    152(%rsp),%r8
-	sbbq    160(%rsp),%r9
-	sbbq    168(%rsp),%r10
-	sbbq    176(%rsp),%r11
-	sbbq    184(%rsp),%rcx
-
+	addq    328(%rsp),%r8
+	adcq    336(%rsp),%r9
+	adcq    344(%rsp),%r10
+	adcq    352(%rsp),%r11
+	adcq    $0,%rcx	
+	
 	shld    $1,%r11,%rcx
 	andq	mask63(%rip),%r11
 
@@ -1975,6 +1947,8 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	imul	$128,%r15,%r15
 	addq	%r15,%rdi
 	
+	/* pnielssub p1p1 */	
+	
 	// neg
 	movq    $0,%r8
 	movq    $0,%r9
@@ -2003,8 +1977,6 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	movq    %r10,480(%rsp)
 	movq    %r11,488(%rsp)
 
-	/* pnielsadd p1p1 */
-	
 	movq	152(%rsp),%r8
 	movq	160(%rsp),%r9
 	movq	168(%rsp),%r10
@@ -3832,6 +3804,8 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	imul	$96,%r15,%r15	
 	addq	%r15,%rdi
 	
+	/* nielssub p1p1 */	
+	
 	// neg
 	movq    $0,%r8
 	movq    $0,%r9
@@ -3860,8 +3834,6 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	movq    %r10,480(%rsp)
 	movq    %r11,488(%rsp)
 
-	/* nielsadd p1p1 */
-	
 	movq	152(%rsp),%r8
 	movq	160(%rsp),%r9
 	movq	168(%rsp),%r10
@@ -4657,3 +4629,4 @@ CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):
 	movq 	%r11,%rsp
 
 	ret
+.section	.note.GNU-stack,"",@progbits

@@ -1,3 +1,6 @@
+// 20240926 djb: switch to memcpy
+
+#include <string.h>
 #include "randombytes.h"
 #include "crypto_nP.h"
 #include "fe25519.h"
@@ -9,11 +12,8 @@ void crypto_nP(unsigned char *q, const unsigned char *n, const unsigned char *p)
 
 	fe25519 r[2];
 	
-	int i;
-	unsigned long long s[4],*t;	
-	
-	t = (unsigned long long *)n;
-	for (i=0;i<4;++i) s[i] = *(t + i);	
+	unsigned long long s[4];
+	memcpy(s,n,32);
 	
 	fe25519_unpack(r,p);
   	mladder(r,r,s);

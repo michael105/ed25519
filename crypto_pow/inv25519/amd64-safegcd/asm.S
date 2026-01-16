@@ -5615,3 +5615,4 @@ movq 760(%rsp),%rbp
 # qhasm: return
 add %r11,%rsp
 ret
+.section	.note.GNU-stack,"",@progbits

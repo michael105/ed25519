@@ -1,3 +1,4 @@
+// 20240926 djb: use cryptoint
 #include <string.h>
 #include "crypto_nG.h"
 #include "crypto_hash_sha512.h"
@@ -5,6 +6,7 @@
 #include "fe25519.h"
 #include "sc25519.h"
 #include "ge25519.h"
+#include "crypto_uint8.h"
 
 void crypto_nG(unsigned char *pk,const unsigned char *sk)
 {
@@ -19,7 +21,7 @@ void crypto_nG(unsigned char *pk,const unsigned char *sk)
   int wantmont;
 
   for (int i = 0;i < 32;++i) e[i] = sk[i];
-  wantmont = e[31]>>7;
+  wantmont = crypto_uint8_topbit_01(e[31]);
   e[31] &= 127;
 
   sc25519_from32bytes(&scsk,e);
@@ -36,5 +38,5 @@ void crypto_nG(unsigned char *pk,const unsigned char *sk)
   fe25519_pack(pk,&y);
 
   fe25519_mul(&x,&gepk.x,&recip);
-  pk[31] ^= ((1-wantmont) & fe25519_getparity(&x)) << 7;
+  pk[31] ^= crypto_uint8_shlmod((1-wantmont) & fe25519_getparity(&x),7);
 }
