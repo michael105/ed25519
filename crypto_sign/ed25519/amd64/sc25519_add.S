@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define sc25519_add
 // linker use ORDER0
 // linker use ORDER1
@@ -71,7 +72,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(sc25519_add)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(sc25519_add)
 .globl _CRYPTO_SHARED_NAMESPACE(sc25519_add)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(sc25519_add)
 .globl CRYPTO_SHARED_NAMESPACE(sc25519_add)
 _CRYPTO_SHARED_NAMESPACE(sc25519_add):
 CRYPTO_SHARED_NAMESPACE(sc25519_add):

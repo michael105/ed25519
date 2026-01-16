@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ladder_base
 // linker use v0_0
 // linker use v1_0
@@ -412,7 +413,9 @@
 
 # qhasm: enter ladder_base
 .p2align 5
+ASM_HIDDEN _ladder_base
 .global _ladder_base
+ASM_HIDDEN ladder_base
 .global ladder_base
 _ladder_base:
 ladder_base:

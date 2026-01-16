@@ -13,6 +13,7 @@
 #define fe25519_to_9l          CRYPTO_NAMESPACE(fe25519_to_9l)
 #define fe25519_9l_to_5l       CRYPTO_NAMESPACE(fe25519_9l_to_5l)
 #define fe25519_from_5l        CRYPTO_NAMESPACE(fe25519_from_5l)
+#define fe25519_to_5l          CRYPTO_NAMESPACE(fe25519_to_5l)
 
 #define fe25519_square(x,y) fe25519_nsquare(x,y,1)
 
@@ -49,5 +50,7 @@ void fe25519_to_9l(fe25519_9l *r, const fe25519 *x);
 void fe25519_9l_to_5l(fe25519_5l *r, const fe25519_9l *x);
 
 void fe25519_from_5l(fe25519 *r, const fe25519_5l *x);
+
+void fe25519_to_5l(fe25519_5l *r, const fe25519 *x);
 
 #endif

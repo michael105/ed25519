@@ -1,4 +1,4 @@
-/* WARNING: auto-generated (by autogen-speed); do not edit */
+/* WARNING: auto-generated (by autogen/speed); do not edit */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 #include <sys/resource.h>
 #include "cpucycles.h" /* -lcpucycles */
 #include "lib25519.h" /* -l25519 */
-#include "randombytes.h" /* -lrandombytes_kernel */
+#include "randombytes.h" /* -lrandombytes */
 
 static const char *targeto = 0;
 static const char *targetp = 0;
@@ -59,6 +59,7 @@ static void t_print(const char *op,long long impl,long long len)
   fflush(stdout);
 }
 
+#define MAXBATCH 16
 #define MAXTEST_BYTES 65536
 
 static void measure_cpucycles(void)
@@ -206,6 +207,35 @@ static void measure_pow_inv25519(void)
   }
 }
 
+static void measure_powbatch_inv25519(void)
+{
+  if (targeto && strcmp(targeto,"powbatch")) return;
+  if (targetp && strcmp(targetp,"inv25519")) return;
+  unsigned char *n = alignedcalloc(MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+  unsigned char *ne = alignedcalloc(MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+
+  for (long long impl = -1;impl < lib25519_numimpl_powbatch_inv25519();++impl) {
+    void (*crypto_powbatch)(unsigned char *,const unsigned char *,long long);
+    if (targeti && strcmp(targeti,lib25519_dispatch_powbatch_inv25519_implementation(impl))) continue;
+    if (impl >= 0) {
+      crypto_powbatch = lib25519_dispatch_powbatch_inv25519(impl);
+      printf("powbatch_inv25519 %lld implementation %s compiler %s\n",impl,lib25519_dispatch_powbatch_inv25519_implementation(impl),lib25519_dispatch_powbatch_inv25519_compiler(impl));
+    } else {
+      crypto_powbatch = lib25519_powbatch_inv25519;
+      printf("powbatch_inv25519 selected implementation %s compiler %s\n",lib25519_powbatch_inv25519_implementation(),lib25519_powbatch_inv25519_compiler());
+    }
+    randombytes(n,MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+    randombytes(ne,MAXBATCH*lib25519_powbatch_inv25519_BYTES);
+    for (long long batch = 0;batch <= MAXBATCH;++batch) {
+      for (long long i = 0;i <= TIMINGS;++i) {
+        t[i] = cpucycles();
+        crypto_powbatch(ne,n,batch);
+      }
+      t_print("powbatch_inv25519",impl,batch);
+    }
+  }
+}
+
 static void measure_nP_montgomery25519(void)
 {
   if (targeto && strcmp(targeto,"nP")) return;
@@ -235,12 +265,43 @@ static void measure_nP_montgomery25519(void)
   }
 }
 
+static void measure_nPbatch_montgomery25519(void)
+{
+  if (targeto && strcmp(targeto,"nPbatch")) return;
+  if (targetp && strcmp(targetp,"montgomery25519")) return;
+  unsigned char *n = alignedcalloc(MAXBATCH*lib25519_nPbatch_montgomery25519_SCALARBYTES);
+  unsigned char *P = alignedcalloc(MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+  unsigned char *nP = alignedcalloc(MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+
+  for (long long impl = -1;impl < lib25519_numimpl_nPbatch_montgomery25519();++impl) {
+    void (*crypto_nPbatch)(unsigned char *,const unsigned char *,const unsigned char *,long long);
+    if (targeti && strcmp(targeti,lib25519_dispatch_nPbatch_montgomery25519_implementation(impl))) continue;
+    if (impl >= 0) {
+      crypto_nPbatch = lib25519_dispatch_nPbatch_montgomery25519(impl);
+      printf("nPbatch_montgomery25519 %lld implementation %s compiler %s\n",impl,lib25519_dispatch_nPbatch_montgomery25519_implementation(impl),lib25519_dispatch_nPbatch_montgomery25519_compiler(impl));
+    } else {
+      crypto_nPbatch = lib25519_nPbatch_montgomery25519;
+      printf("nPbatch_montgomery25519 selected implementation %s compiler %s\n",lib25519_nPbatch_montgomery25519_implementation(),lib25519_nPbatch_montgomery25519_compiler());
+    }
+    randombytes(n,MAXBATCH*lib25519_nPbatch_montgomery25519_SCALARBYTES);
+    randombytes(P,MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+    randombytes(nP,MAXBATCH*lib25519_nPbatch_montgomery25519_POINTBYTES);
+    for (long long batch = 0;batch <= MAXBATCH;++batch) {
+      for (long long i = 0;i <= TIMINGS;++i) {
+        t[i] = cpucycles();
+        crypto_nPbatch(nP,n,P,batch);
+      }
+      t_print("nPbatch_montgomery25519",impl,batch);
+    }
+  }
+}
+
 static void measure_nG_merged25519(void)
 {
   if (targeto && strcmp(targeto,"nG")) return;
   if (targetp && strcmp(targetp,"merged25519")) return;
-  unsigned char *n = alignedcalloc(lib25519_nP_SCALARBYTES);
-  unsigned char *nG = alignedcalloc(lib25519_nP_POINTBYTES);
+  unsigned char *n = alignedcalloc(lib25519_nG_merged25519_SCALARBYTES);
+  unsigned char *nG = alignedcalloc(lib25519_nG_merged25519_POINTBYTES);
 
   for (long long impl = -1;impl < lib25519_numimpl_nG_merged25519();++impl) {
     void (*crypto_nG)(unsigned char *,const unsigned char *);
@@ -252,13 +313,13 @@ static void measure_nG_merged25519(void)
       crypto_nG = lib25519_nG_merged25519;
       printf("nG_merged25519 selected implementation %s compiler %s\n",lib25519_nG_merged25519_implementation(),lib25519_nG_merged25519_compiler());
     }
-    randombytes(n,lib25519_nP_SCALARBYTES);
-    randombytes(nG,lib25519_nP_POINTBYTES);
+    randombytes(n,lib25519_nG_merged25519_SCALARBYTES);
+    randombytes(nG,lib25519_nG_merged25519_POINTBYTES);
     for (long long i = 0;i <= TIMINGS;++i) {
       t[i] = cpucycles();
       crypto_nG(nG,n);
     }
-    t_print("nG_merged25519",impl,lib25519_nP_POINTBYTES);
+    t_print("nG_merged25519",impl,lib25519_nG_merged25519_POINTBYTES);
   }
 }
 
@@ -266,8 +327,8 @@ static void measure_nG_montgomery25519(void)
 {
   if (targeto && strcmp(targeto,"nG")) return;
   if (targetp && strcmp(targetp,"montgomery25519")) return;
-  unsigned char *n = alignedcalloc(lib25519_nP_SCALARBYTES);
-  unsigned char *nG = alignedcalloc(lib25519_nP_POINTBYTES);
+  unsigned char *n = alignedcalloc(lib25519_nG_montgomery25519_SCALARBYTES);
+  unsigned char *nG = alignedcalloc(lib25519_nG_montgomery25519_POINTBYTES);
 
   for (long long impl = -1;impl < lib25519_numimpl_nG_montgomery25519();++impl) {
     void (*crypto_nG)(unsigned char *,const unsigned char *);
@@ -279,13 +340,13 @@ static void measure_nG_montgomery25519(void)
       crypto_nG = lib25519_nG_montgomery25519;
       printf("nG_montgomery25519 selected implementation %s compiler %s\n",lib25519_nG_montgomery25519_implementation(),lib25519_nG_montgomery25519_compiler());
     }
-    randombytes(n,lib25519_nP_SCALARBYTES);
-    randombytes(nG,lib25519_nP_POINTBYTES);
+    randombytes(n,lib25519_nG_montgomery25519_SCALARBYTES);
+    randombytes(nG,lib25519_nG_montgomery25519_POINTBYTES);
     for (long long i = 0;i <= TIMINGS;++i) {
       t[i] = cpucycles();
       crypto_nG(nG,n);
     }
-    t_print("nG_montgomery25519",impl,lib25519_nP_POINTBYTES);
+    t_print("nG_montgomery25519",impl,lib25519_nG_montgomery25519_POINTBYTES);
   }
 }
 
@@ -317,6 +378,37 @@ static void measure_mGnP_ed25519(void)
       crypto_mGnP(mGnP,m,n,P);
     }
     t_print("mGnP_ed25519",impl,lib25519_mGnP_ed25519_OUTPUTBYTES);
+  }
+}
+
+static void measure_multiscalar_ed25519(void)
+{
+  if (targeto && strcmp(targeto,"multiscalar")) return;
+  if (targetp && strcmp(targetp,"ed25519")) return;
+  unsigned char *Q = alignedcalloc(MAXBATCH*lib25519_multiscalar_ed25519_OUTPUTBYTES);
+  unsigned char *n = alignedcalloc(MAXBATCH*lib25519_multiscalar_ed25519_SCALARBYTES);
+  unsigned char *P = alignedcalloc(MAXBATCH*lib25519_multiscalar_ed25519_POINTBYTES);
+
+  for (long long impl = -1;impl < lib25519_numimpl_multiscalar_ed25519();++impl) {
+    void (*crypto_multiscalar)(unsigned char *,const unsigned char *,const unsigned char *,long long);
+    if (targeti && strcmp(targeti,lib25519_dispatch_multiscalar_ed25519_implementation(impl))) continue;
+    if (impl >= 0) {
+      crypto_multiscalar = lib25519_dispatch_multiscalar_ed25519(impl);
+      printf("multiscalar_ed25519 %lld implementation %s compiler %s\n",impl,lib25519_dispatch_multiscalar_ed25519_implementation(impl),lib25519_dispatch_multiscalar_ed25519_compiler(impl));
+    } else {
+      crypto_multiscalar = lib25519_multiscalar_ed25519;
+      printf("multiscalar_ed25519 selected implementation %s compiler %s\n",lib25519_multiscalar_ed25519_implementation(),lib25519_multiscalar_ed25519_compiler());
+    }
+    randombytes(Q,MAXBATCH*lib25519_multiscalar_ed25519_OUTPUTBYTES);
+    randombytes(n,MAXBATCH*lib25519_multiscalar_ed25519_SCALARBYTES);
+    randombytes(P,MAXBATCH*lib25519_multiscalar_ed25519_POINTBYTES);
+    for (long long batch = 0;batch <= MAXBATCH;++batch) {
+      for (long long i = 0;i <= TIMINGS;++i) {
+        t[i] = cpucycles();
+        crypto_multiscalar(Q,n,P,batch);
+      }
+      t_print("multiscalar_ed25519",impl,batch);
+    }
   }
 }
 
@@ -455,10 +547,13 @@ int main(int argc,char **argv)
   measure_hashblocks_sha512();
   measure_hash_sha512();
   measure_pow_inv25519();
+  measure_powbatch_inv25519();
   measure_nP_montgomery25519();
+  measure_nPbatch_montgomery25519();
   measure_nG_merged25519();
   measure_nG_montgomery25519();
   measure_mGnP_ed25519();
+  measure_multiscalar_ed25519();
   measure_dh_x25519();
   measure_sign_ed25519();
 

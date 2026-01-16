@@ -7,7 +7,7 @@ import subprocess
 topnamespace = sys.argv[1]
 
 def warn(w):
-  sys.stderr.write('warning: %s\n' % w)
+  sys.stderr.write('[31;1mwarning: %s[0m\n' % w)
   fwarn.write('%s\n' % w)
 
 done = set()
@@ -69,7 +69,7 @@ def doit(d):
     if symbol.startswith('__x86.get_pc_thunk.'): continue
 
     ssplit = symbol.split('_')
-    if len(ssplit) >= 6 and ssplit[0] in ('lib25519','_lib25519'):
+    if len(ssplit) >= 6 and ssplit[0] in (topnamespace,'_'+topnamespace):
       ssplit = '_'.join(ssplit[5:])
       if line[2].startswith('U'): obj2U[obj] += [ssplit]
       if line[2].startswith('R'): obj2R[obj] += [ssplit]
@@ -124,5 +124,5 @@ def doit(d):
 
 for d in sys.argv[2:]:
   d = d.strip()
-  with open('%s/warnings-namespace'%d,'w') as fwarn:
+  with open('%s/result-namespace'%d,'w') as fwarn:
     doit(d)

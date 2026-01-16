@@ -5,8 +5,9 @@ import sys
 
 def ok(d):
   for fn in os.listdir(d):
-    if fn.endswith('.o.compilefailed'):
-      return False
+    if fn.endswith('.o'):
+      if os.stat(d+'/'+fn).st_size == 0:
+        return False
   if os.path.exists(d+'/dependencies'):
     with open(d+'/dependencies') as f:
       for line in f:

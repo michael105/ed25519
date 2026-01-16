@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define base
 // linker use vec1216
 // linker use vecmask23
@@ -34,7 +35,9 @@
 #include "consts_namespace.h"
 
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(base)
 .globl _CRYPTO_SHARED_NAMESPACE(base)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(base)
 .globl CRYPTO_SHARED_NAMESPACE(base)
 _CRYPTO_SHARED_NAMESPACE(base):
 CRYPTO_SHARED_NAMESPACE(base):

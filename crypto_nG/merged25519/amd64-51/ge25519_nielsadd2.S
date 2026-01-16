@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ge25519_nielsadd2
 // linker use REDMASK51
 // linker use 2P0
@@ -340,7 +341,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2)
 .globl _CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2)
 .globl CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2)
 _CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2):
 CRYPTO_SHARED_NAMESPACE(ge25519_nielsadd2):

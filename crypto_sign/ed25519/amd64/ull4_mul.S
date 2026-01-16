@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ull4_mul
 
 # qhasm: int64 rp
@@ -81,7 +82,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(ull4_mul) 
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(ull4_mul)
 .globl _CRYPTO_SHARED_NAMESPACE(ull4_mul)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(ull4_mul)
 .globl CRYPTO_SHARED_NAMESPACE(ull4_mul)
 _CRYPTO_SHARED_NAMESPACE(ull4_mul):
 CRYPTO_SHARED_NAMESPACE(ull4_mul):

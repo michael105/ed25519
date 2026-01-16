@@ -14,6 +14,12 @@ def sanitize(x):
 exports = {}
 prototypes = {}
 
+ifunc = False
+with open('dispatch/ifunc') as f:
+  for line in f:
+    if line.strip() == '1':
+      ifunc = True
+
 with open('api') as f:
   for line in f:
     line = line.strip()
@@ -37,6 +43,7 @@ assert goal in ('auto','manual')
 o = sys.argv[2]
 p = sys.argv[3]
 host = sys.argv[4]
+namespace = sys.argv[5]
 
 impls = []
 selected = []
@@ -66,90 +73,119 @@ if goal == 'manual':
   allarches = [a for a in allarches if any(a == icarch[i,c] for i,c in impls)]
 
 if goal == 'auto':
-  print('extern const char *lib25519_%s_%s_implementation(void) __attribute__((visibility("default")));' % (o,p))
-  print('extern const char *lib25519_%s_%s_compiler(void) __attribute__((visibility("default")));' % (o,p))
+  print(f'extern const char *{namespace}_%s_%s_implementation(void) __attribute__((visibility("default")));' % (o,p))
+  print(f'extern const char *{namespace}_%s_%s_compiler(void) __attribute__((visibility("default")));' % (o,p))
 else:
-  print('extern const char *lib25519_%s_%s_implementation(void);' % (o,p))
-  print('extern const char *lib25519_%s_%s_compiler(void);' % (o,p))
-  print('extern const char *lib25519_dispatch_%s_%s_implementation(long long) __attribute__((visibility("default")));' % (o,p))
-  print('extern const char *lib25519_dispatch_%s_%s_compiler(long long) __attribute__((visibility("default")));' % (o,p))
-  print('extern long long lib25519_numimpl_%s_%s(void) __attribute__((visibility("default")));' % (o,p))
+  print(f'extern const char *{namespace}_%s_%s_implementation(void);' % (o,p))
+  print(f'extern const char *{namespace}_%s_%s_compiler(void);' % (o,p))
+  print(f'extern const char *{namespace}_dispatch_%s_%s_implementation(long long) __attribute__((visibility("default")));' % (o,p))
+  print(f'extern const char *{namespace}_dispatch_%s_%s_compiler(long long) __attribute__((visibility("default")));' % (o,p))
+  print(f'extern long long {namespace}_numimpl_%s_%s(void) __attribute__((visibility("default")));' % (o,p))
 
 for a in allarches:
   if a == 'default': continue
   a_csymbol = sanitize(a)
-  print('extern int lib25519_supports_%s(void);' % a_csymbol)
+  print(f'extern int {namespace}_supports_%s(void);' % a_csymbol)
 if len(allarches) > 1: print('')
 
 def printfun_auto(which,fun=None):
+  defaultpointer = '0'
+
   if which == 'resolver':
     shortfun = '_'.join(fun[1:])
     pshortfun = '_'.join([o,p]+fun[2:])
-    print('void *lib25519_auto_%s(void)' % (pshortfun))
+    print(f'void *{namespace}_auto_%s(void)' % (pshortfun))
   elif which == 'implementation':
-    print('const char *lib25519_%s_%s_implementation(void)' % (o,p))
+    print(f'const char *{namespace}_%s_%s_implementation(void)' % (o,p))
   elif which == 'compiler':
-    print('const char *lib25519_%s_%s_compiler(void)' % (o,p))
+    print(f'const char *{namespace}_%s_%s_compiler(void)' % (o,p))
   else:
     raise ValueError('unknown printfun %s' % which)
   print('{')
   for a,i,c in selected:
     cond = ''
     if a != 'default':
-      cond = 'if (lib25519_supports_%s()) ' % sanitize(a)
+      cond = f'if ({namespace}_supports_%s()) ' % sanitize(a)
     if which == 'resolver':
-      print('  %sreturn lib25519_%s_%s_%s_%s_%s;' % (cond,o,p,sanitize(i),c,shortfun))
+      thispointer = f'{namespace}_{o}_{p}_{sanitize(i)}_{c}_{shortfun}'
+      if a == 'default':
+        defaultpointer = thispointer
+      print(f'  {cond}return {thispointer};')
     if which == 'implementation':
       print('  %sreturn %s;' % (cond,cstring(i)))
     if which == 'compiler':
       print('  %sreturn %s;' % (cond,cstring(iccompiler[i,c])))
     if a == 'default': break
+  if len(selected) == 0:
+    print('  return 0; /* no compiled implementations; defer crash to run time */')
   print('}')
 
   if which == 'resolver':
-    print('')
-    print('%s lib25519_%s(%s) __attribute__((visibility("default"))) __attribute__((ifunc("lib25519_auto_%s")));' % (rettype,pshortfun,args,pshortfun))
+    if ifunc:
+      print('')
+      print(f'%s {namespace}_%s(%s) __attribute__((visibility("default"))) __attribute__((ifunc("{namespace}_auto_%s")));' % (rettype,pshortfun,args,pshortfun))
+    else:
+      print('')
+      print(f'static {rettype} (*{namespace}_{pshortfun}_pointer)({args}) = {defaultpointer};')
+      print('')
+      print('__attribute__((constructor(25519)))')
+      print(f'static void {namespace}_{pshortfun}_pointer_constructor(void)')
+      print('{')
+      print(f'  {namespace}_{pshortfun}_pointer = {namespace}_auto_{pshortfun}();')
+      print('}')
+      print('')
+      namedparams = args.split(',')
+      namedargs = []
+      for i in range(len(namedparams)):
+        if namedparams[i][-1] != '*':
+          namedparams[i] += ' '
+        namedparams[i] += 'arg%d'%i
+        namedargs += ['arg%d'%i]
+      namedparams = ','.join(namedparams)
+      namedargs = ','.join(namedargs)
+      print('__attribute__((visibility("default")))')
+      print(f'{rettype} {namespace}_{pshortfun}({namedparams})')
+      print('{')
+      if rettype == 'void':
+        print(f'  {namespace}_{pshortfun}_pointer({namedargs});')
+      else:
+        print(f'  return {namespace}_{pshortfun}_pointer({namedargs});')
+      print('}')
 
 for rettype,fun,args in prototypes[o]:
   shortfun = '_'.join(fun[1:])
   pshortfun = '_'.join([o,p]+fun[2:])
   if goal == 'auto':
-    print('extern %s lib25519_%s(%s) __attribute__((visibility("default")));' % (rettype,pshortfun,args))
+    print(f'extern %s {namespace}_%s(%s) __attribute__((visibility("default")));' % (rettype,pshortfun,args))
   else:
-    print('extern %s lib25519_%s(%s);' % (rettype,pshortfun,args))
-    print('extern %s (*lib25519_dispatch_%s(long long))(%s) __attribute__((visibility("default")));' % (rettype,pshortfun,args))
+    print(f'extern %s {namespace}_%s(%s);' % (rettype,pshortfun,args))
+    print(f'extern %s (*{namespace}_dispatch_%s(long long))(%s) __attribute__((visibility("default")));' % (rettype,pshortfun,args))
   print('')
   for i,c in impls:
     if goal == 'auto':
       if (i,c) not in usedimpls:
         continue
-    print('extern %s lib25519_%s_%s_%s_%s_%s(%s) __attribute__((visibility("default")));' % (rettype,o,p,sanitize(i),c,shortfun,args))
+    print(f'extern %s {namespace}_%s_%s_%s_%s_%s(%s) __attribute__((visibility("default")));' % (rettype,o,p,sanitize(i),c,shortfun,args))
   print('')
   if goal == 'auto':
     printfun_auto('resolver',fun)
   if goal == 'manual':
-    namedparams = args.split(',')
-    for i in range(len(namedparams)):
-      if namedparams[i][-1] != '*':
-        namedparams[i] += ' '
-      namedparams[i] += 'arg%d'%i
-    namedparams = ','.join(namedparams)
-    print('%s (*lib25519_dispatch_%s(long long impl))(%s)' % (rettype,pshortfun,args))
+    print(f'%s (*{namespace}_dispatch_%s(long long impl))(%s)' % (rettype,pshortfun,args))
     print('{')
     for a in allarches:
       if a == 'default': continue
       a_csymbol = sanitize(a)
-      print('  int supports_%s = lib25519_supports_%s();' % (a_csymbol,a_csymbol))
+      print(f'  int supports_%s = {namespace}_supports_%s();' % (a_csymbol,a_csymbol))
     print('  if (impl >= 0) {')
     for i,c in impls:
       a = icarch[i,c]
       a_csymbol = sanitize(a)
       if a == 'default':
-        print('    if (!impl--) return lib25519_%s_%s_%s_%s_%s;' % (o,p,sanitize(i),c,shortfun))
+        print(f'    if (!impl--) return {namespace}_%s_%s_%s_%s_%s;' % (o,p,sanitize(i),c,shortfun))
       else:
-        print('    if (supports_%s) if (!impl--) return lib25519_%s_%s_%s_%s_%s;' % (a_csymbol,o,p,sanitize(i),c,shortfun))
+        print(f'    if (supports_%s) if (!impl--) return {namespace}_%s_%s_%s_%s_%s;' % (a_csymbol,o,p,sanitize(i),c,shortfun))
     print('  }')
-    print('  return lib25519_%s;' % (pshortfun))
+    print(f'  return {namespace}_%s;' % (pshortfun))
     print('}')
   print('')
 
@@ -158,12 +194,12 @@ if goal == 'auto':
   print('')
   printfun_auto('compiler')
 else:
-  print('const char *lib25519_dispatch_%s_%s_implementation(long long impl)' % (o,p))
+  print(f'const char *{namespace}_dispatch_%s_%s_implementation(long long impl)' % (o,p))
   print('{')
   for a in allarches:
     if a == 'default': continue
     a_csymbol = sanitize(a)
-    print('  int supports_%s = lib25519_supports_%s();' % (a_csymbol,a_csymbol))
+    print(f'  int supports_%s = {namespace}_supports_%s();' % (a_csymbol,a_csymbol))
   print('  if (impl >= 0) {')
   for i,c in impls:
     a = icarch[i,c]
@@ -173,16 +209,16 @@ else:
     else:
       print('    if (supports_%s) if (!impl--) return %s;' % (a_csymbol,cstring(i)))
   print('  }')
-  print('  return lib25519_%s_%s_implementation();' % (o,p))
+  print(f'  return {namespace}_%s_%s_implementation();' % (o,p))
   print('}')
   print('')
 
-  print('const char *lib25519_dispatch_%s_%s_compiler(long long impl)' % (o,p))
+  print(f'const char *{namespace}_dispatch_%s_%s_compiler(long long impl)' % (o,p))
   print('{')
   for a in allarches:
     if a == 'default': continue
     a_csymbol = sanitize(a)
-    print('  int supports_%s = lib25519_supports_%s();' % (a_csymbol,a_csymbol))
+    print(f'  int supports_%s = {namespace}_supports_%s();' % (a_csymbol,a_csymbol))
   print('  if (impl >= 0) {')
   for i,c in impls:
     a = icarch[i,c]
@@ -192,18 +228,18 @@ else:
     else:
       print('    if (supports_%s) if (!impl--) return %s;' % (a_csymbol,cstring(iccompiler[i,c])))
   print('  }')
-  print('  return lib25519_%s_%s_compiler();' % (o,p))
+  print(f'  return {namespace}_%s_%s_compiler();' % (o,p))
   print('}')
   print('')
 
-  print('long long lib25519_numimpl_%s_%s(void)' % (o,p))
+  print(f'long long {namespace}_numimpl_%s_%s(void)' % (o,p))
   print('{')
   numimpla = sum(1 for (i,c) in impls if icarch[i,c] == 'default')
   numimpl = ['%d' % numimpla]
   for a in allarches:
     if a == 'default': continue
     a_csymbol = sanitize(a)
-    print('  long long supports_%s = lib25519_supports_%s();' % (a_csymbol,a_csymbol))
+    print(f'  long long supports_%s = {namespace}_supports_%s();' % (a_csymbol,a_csymbol))
     numimpla = sum(1 for (i,c) in impls if icarch[i,c] == a)
     numimpl += ['supports_%s*%d' % (a_csymbol,numimpla)]
   print('  return %s;' % '+'.join(numimpl))

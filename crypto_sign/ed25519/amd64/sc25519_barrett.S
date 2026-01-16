@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define sc25519_barrett
 // linker use MU0
 // linker use MU1
@@ -120,7 +121,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(sc25519_barrett)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(sc25519_barrett)
 .globl _CRYPTO_SHARED_NAMESPACE(sc25519_barrett)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(sc25519_barrett)
 .globl CRYPTO_SHARED_NAMESPACE(sc25519_barrett)
 _CRYPTO_SHARED_NAMESPACE(sc25519_barrett):
 CRYPTO_SHARED_NAMESPACE(sc25519_barrett):

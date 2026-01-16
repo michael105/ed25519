@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ge25519_double_scalarmult_process
 // linker use upmask1 upmask2 upmask3 upmask4 upmask5 upmask6 upmask7
 // linker use pmask1 pmask2 pmask3 pmask4 pmask5 pmask6 pmask7 pmask8
@@ -13,7 +14,9 @@
 #include "consts_namespace.h"
 
         .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process)
         .globl _CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process)
         .globl CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process)
 
 _CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_process):

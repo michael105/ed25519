@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ge25519_p1p1_to_p2
 // linker use REDMASK51
 
@@ -108,7 +109,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2)
 .globl _CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2)
 .globl CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2)
 _CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2):
 CRYPTO_SHARED_NAMESPACE(ge25519_p1p1_to_p2):

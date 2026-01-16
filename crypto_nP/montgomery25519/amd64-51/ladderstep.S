@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ladderstep
 // linker use REDMASK51
 // linker use 2P0
@@ -319,7 +320,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(ladderstep)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(ladderstep)
 .globl _CRYPTO_SHARED_NAMESPACE(ladderstep)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(ladderstep)
 .globl CRYPTO_SHARED_NAMESPACE(ladderstep)
 _CRYPTO_SHARED_NAMESPACE(ladderstep):
 CRYPTO_SHARED_NAMESPACE(ladderstep):

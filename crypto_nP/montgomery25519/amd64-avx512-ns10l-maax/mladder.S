@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define mladder
 // linker use hh1_p1
 // linker use hh1_p2
@@ -20,7 +21,9 @@
 #include "consts_namespace.h"
 
 	.p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(mladder)
 	.globl _CRYPTO_SHARED_NAMESPACE(mladder)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(mladder)
 	.globl CRYPTO_SHARED_NAMESPACE(mladder)
 	
 _CRYPTO_SHARED_NAMESPACE(mladder):

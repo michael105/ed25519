@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define fe25519_square
 // linker use mask63
 
@@ -6,7 +7,9 @@
 #define mask63 CRYPTO_SHARED_NAMESPACE(mask63)
 
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(fe25519_square)
 .globl _CRYPTO_SHARED_NAMESPACE(fe25519_square)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(fe25519_square)
 .globl CRYPTO_SHARED_NAMESPACE(fe25519_square)
 _CRYPTO_SHARED_NAMESPACE(fe25519_square):
 CRYPTO_SHARED_NAMESPACE(fe25519_square):

@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 
 # qhasm: int64 input_0
 
@@ -281,7 +282,9 @@
 
 # qhasm: enter inverse25519_skylake_asm
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(asm)
 .global _CRYPTO_SHARED_NAMESPACE(asm)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(asm)
 .global CRYPTO_SHARED_NAMESPACE(asm)
 _CRYPTO_SHARED_NAMESPACE(asm):
 CRYPTO_SHARED_NAMESPACE(asm):

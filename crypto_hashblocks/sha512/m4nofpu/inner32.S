@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define inner
 
 # qhasm: int32 input_0
@@ -221,6 +222,7 @@
 
 # qhasm: rpushenter CRYPTO_SHARED_NAMESPACE(inner)
 .p2align 2
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(inner)
 .global CRYPTO_SHARED_NAMESPACE(inner)
 .type CRYPTO_SHARED_NAMESPACE(inner),%function
 .thumb

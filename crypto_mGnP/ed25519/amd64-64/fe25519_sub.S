@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define fe25519_sub
 
 # qhasm: int64 rp
@@ -69,7 +70,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(fe25519_sub)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(fe25519_sub)
 .globl _CRYPTO_SHARED_NAMESPACE(fe25519_sub)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(fe25519_sub)
 .globl CRYPTO_SHARED_NAMESPACE(fe25519_sub)
 _CRYPTO_SHARED_NAMESPACE(fe25519_sub):
 CRYPTO_SHARED_NAMESPACE(fe25519_sub):

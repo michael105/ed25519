@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define work_cswap
 
 # qhasm: int64 workp
@@ -113,7 +114,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(work_cswap)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(work_cswap)
 .globl _CRYPTO_SHARED_NAMESPACE(work_cswap)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(work_cswap)
 .globl CRYPTO_SHARED_NAMESPACE(work_cswap)
 _CRYPTO_SHARED_NAMESPACE(work_cswap):
 CRYPTO_SHARED_NAMESPACE(work_cswap):

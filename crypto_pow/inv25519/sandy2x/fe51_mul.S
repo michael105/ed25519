@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define fe51_mul
 // linker use REDMASK51
 
@@ -109,7 +110,9 @@
 # qhasm: enter fe51_mul
 .text
 .p2align 5
+ASM_HIDDEN _fe51_mul
 .globl _fe51_mul
+ASM_HIDDEN fe51_mul
 .globl fe51_mul
 _fe51_mul:
 fe51_mul:

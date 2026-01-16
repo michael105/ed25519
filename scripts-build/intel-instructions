@@ -941,6 +941,9 @@ movsb - i86
 movsb m,m base
 movsd - i386
 movsd m,m base
+movsd xmm,xmm sse2
+movsd xmm,m sse2
+movsd m,xmm sse2
 movshdup xmm,m sse3
 movshdup xmm,xmm sse3
 movsldup xmm,m sse3
@@ -1111,6 +1114,7 @@ pavgw xmm,m sse2
 pavgw xmm,xmm sse2
 pblendvb xmm,m sse4.1
 pblendvb xmm,xmm sse4.1
+pblendvb xmm,xmm,xmm sse4.1
 pblendw xmm,m,imm sse4.1
 pblendw xmm,xmm,imm sse4.1
 pclmulqdq xmm,m,imm pclmulqdq

@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define fe51_nsquare
 // linker use REDMASK51
 
@@ -103,7 +104,9 @@
 
 # qhasm: enter fe51_nsquare
 .p2align 5
+ASM_HIDDEN _fe51_nsquare
 .global _fe51_nsquare
+ASM_HIDDEN fe51_nsquare
 .global fe51_nsquare
 _fe51_nsquare:
 fe51_nsquare:

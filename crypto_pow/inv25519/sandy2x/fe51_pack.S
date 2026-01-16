@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define fe51_pack
 // linker use REDMASK51
 
@@ -75,7 +76,9 @@
 
 # qhasm: enter fe51_pack
 .p2align 5
+ASM_HIDDEN _fe51_pack
 .global _fe51_pack
+ASM_HIDDEN fe51_pack
 .global fe51_pack
 _fe51_pack:
 fe51_pack:

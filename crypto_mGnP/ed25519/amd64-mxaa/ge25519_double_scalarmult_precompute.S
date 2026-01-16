@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define ge25519_double_scalarmult_precompute
 // linker use EC2D0 EC2D1 EC2D2 EC2D3 mask63
 
@@ -15,7 +16,9 @@
 #define EC2D3 CRYPTO_SHARED_NAMESPACE(EC2D3)
 
 	.p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_precompute)
 	.globl _CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_precompute)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_precompute)
 	.globl CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_precompute)
 	
 _CRYPTO_SHARED_NAMESPACE(ge25519_double_scalarmult_precompute):

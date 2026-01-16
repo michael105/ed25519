@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define fe25519_freeze
 // linker use REDMASK51
 
@@ -68,7 +69,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(fe25519_freeze)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(fe25519_freeze)
 .globl _CRYPTO_SHARED_NAMESPACE(fe25519_freeze)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(fe25519_freeze)
 .globl CRYPTO_SHARED_NAMESPACE(fe25519_freeze)
 _CRYPTO_SHARED_NAMESPACE(fe25519_freeze):
 CRYPTO_SHARED_NAMESPACE(fe25519_freeze):

@@ -1,3 +1,4 @@
+#include "crypto_asm_hidden.h"
 // linker define choose_t
 // linker use 2P0
 // linker use 2P1234
@@ -111,7 +112,9 @@
 # qhasm: enter CRYPTO_SHARED_NAMESPACE(choose_t)
 .text
 .p2align 5
+ASM_HIDDEN _CRYPTO_SHARED_NAMESPACE(choose_t)
 .globl _CRYPTO_SHARED_NAMESPACE(choose_t)
+ASM_HIDDEN CRYPTO_SHARED_NAMESPACE(choose_t)
 .globl CRYPTO_SHARED_NAMESPACE(choose_t)
 _CRYPTO_SHARED_NAMESPACE(choose_t):
 CRYPTO_SHARED_NAMESPACE(choose_t):

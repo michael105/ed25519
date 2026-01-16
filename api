@@ -15,10 +15,19 @@ crypto_pow/inv25519 ad2062946e82718da820226504991a85c5fe56bdbff959c1313f837ee13b
 #define crypto_pow_inv25519_BYTES 32
 void crypto_pow(unsigned char *,const unsigned char *);
 
+crypto_powbatch/inv25519 45b0b9dfeb75a7599064cbcd4fb3a5616105fe80f1dc7bf5258de9d1cb48c8e6 9640b3e6b144ed3ef470ab7c8a24c30c18d951f36ca19890224c1ea3d7703317
+#define crypto_powbatch_inv25519_BYTES 32
+void crypto_powbatch(unsigned char *,const unsigned char *,long long);
+
 crypto_nP/montgomery25519 b861d66109b42359e5994ed57ae566827c345b65a9d0671700320b82888397ec 740924011f3448f65299f61b087f74a6eb9651a4203dfbf621d2bec54e149405
 #define crypto_nP_montgomery25519_SCALARBYTES 32
 #define crypto_nP_montgomery25519_POINTBYTES 32
 void crypto_nP(unsigned char *,const unsigned char *,const unsigned char *);
+
+crypto_nPbatch/montgomery25519 70ad918d115325afd930af794ffaa7941a917fcda4f80a02079566e6164fa970 a0b24a12c2f75852961141d12324d5ee943e8200fcba97c56ce239362e4cdda3
+#define crypto_nPbatch_montgomery25519_SCALARBYTES 32
+#define crypto_nPbatch_montgomery25519_POINTBYTES 32
+void crypto_nPbatch(unsigned char *,const unsigned char *,const unsigned char *,long long);
 
 crypto_nG/merged25519 a4e761839798a07817484e97605bd63215b4938934ed9ce01935bbced48155bc 0a01c09fc8a8c7e8c18f841b2e1b2da9c156868737d194d223b03531cf2db731 
 #define crypto_nG_merged25519_SCALARBYTES 32
@@ -34,6 +43,12 @@ crypto_mGnP/ed25519 dc80be44fb0d482c5ae430779e76fe612c53fcd9e5847254bf27ab34e907
 #define crypto_mGnP_ed25519_PBYTES 32
 #define crypto_mGnP_ed25519_OUTPUTBYTES 33
 void crypto_mGnP(unsigned char *,const unsigned char *,const unsigned char *,const unsigned char *);
+
+crypto_multiscalar/ed25519 4835e913d35c3c10ad459c2154c0b2041f0621b3f4f837b86f41d7c37917864b b0c5400d6d1550c8f56869e0fdf87a524c523f7fd2c59701a9982f1c90f6d6bc
+#define crypto_multiscalar_ed25519_SCALARBYTES 32
+#define crypto_multiscalar_ed25519_POINTBYTES 32
+#define crypto_multiscalar_ed25519_OUTPUTBYTES 33
+void crypto_multiscalar(unsigned char *,const unsigned char *,const unsigned char *,long long);
 
 crypto_dh/x25519 2c8a73ec86d5d4c4bc838f49cfd78c87b60b534ae6fff59ce3bea0c32cdc1450 b09016b3a1371786b46a183085133338159e623c5eb9cbc5eaa4f8b62d6c5aea
 #define crypto_dh_x25519_SECRETKEYBYTES 32

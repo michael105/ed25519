@@ -7,8 +7,8 @@ import subprocess
 host = sys.argv[1]
 
 def warn(w):
-  sys.stderr.write('warning: %s\n' % w)
-  fwarn.write('%s\n' % w)
+  sys.stderr.write('[31;1mwarning: %s[0m\n' % w)
+  fresult.write('%s\n' % w)
 
 carch = {}
 for c in os.listdir('compilerarch'):
@@ -149,8 +149,14 @@ def extok(arch,ext):
   arch = arch.split('+')[1:]
   if ext in ('base','i86','i186','i286','i386','i486real','longmode','x87','sse','sse2','cmov','fat_nop'):
     return True # amd64 guarantees support for these
-  if ext in ('sse4.1','sse4.2','avx'): return 'avx' in arch
-  if ext in ('bmi1','bmi2'): return 'bmi2' in arch
+  if ext == 'popcnt': return 'popcnt' in arch
+  if ext == 'bmi1': return 'bmi1' in arch
+  if ext == 'bmi2': return 'bmi2' in arch
+  if ext == 'sse3': return 'sse3' in arch
+  if ext == 'ssse3': return 'ssse3' in arch
+  if ext == 'sse4.1': return 'sse41' in arch
+  if ext == 'sse4.2': return 'sse42' in arch
+  if ext == 'avx': return 'avx' in arch
   if ext == 'adx': return 'adx' in arch
   if ext == 'avx2': return 'avx2' in arch
   if ext == 'avx512f': return 'avx512f' in arch
@@ -159,12 +165,14 @@ def extok(arch,ext):
   return False # XXX
 
 def checkinsn(obj,arch,insn):
+  global extset
+
   insn = insn.split()
   if host == 'amd64' and insn == ['endbr64']:
     return # XXX
   if host == 'amd64' and insn == ['xgetbv'] and (obj.startswith('compilers/') or obj.startswith('cpuid/')):
     return # assume dispatch code is using xgetbv carefully
-  while len(insn) >= 1 and insn[0] in ('cs','data16','rep','repe','repz'):
+  while len(insn) >= 1 and insn[0] in ('cs','data16','rep','repe','repz','notrack'):
     insn = insn[1:]
   if len(insn) == 0: return
   mnem = insn[0]
@@ -175,6 +183,7 @@ def checkinsn(obj,arch,insn):
     return
   for args,ext in insns[mnem]:
     if argsmatch(args,' '.join(insn[1:]),ext):
+      extset.add(ext)
       if not extok(arch,ext):
         warn('%s: %s instruction set does not allow %s: %s' % (obj,arch,ext,' '.join(insn)))
       return
@@ -225,5 +234,9 @@ def doit(d):
 
 for d in sys.argv[2:]:
   d = d.strip()
-  with open('%s/warnings-insns'%d,'w') as fwarn:
+  extset = set()
+  with open('%s/result-insns'%d,'w') as fresult:
     doit(d)
+  with open('%s/info-insns'%d,'w') as finfo:
+    for ext in sorted(extset):
+      finfo.write(ext+'\n')
