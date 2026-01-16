@@ -1,1 +1,17 @@
-../../../crypto_mGnP/ed25519/ref10/ge_p2_dbl.c
+// linker define ge_p2_dbl
+// linker use fe_add
+// linker use fe_sub
+// linker use fe_sq
+// linker use fe_sq2
+
+#include "ge.h"
+
+/*
+r = 2 * p
+*/
+
+void ge_p2_dbl(ge_p1p1 *r,const ge_p2 *p)
+{
+  fe t0;
+#include "ge_p2_dbl.h"
+}

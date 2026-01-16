@@ -1,1 +1,15 @@
-../../../crypto_mGnP/ed25519/ref10/ge_p3_to_p2.c
+// linker define ge_p3_to_p2
+// linker use fe_copy
+
+#include "ge.h"
+
+/*
+r = p
+*/
+
+void ge_p3_to_p2(ge_p2 *r,const ge_p3 *p)
+{
+  fe_copy(r->X,p->X);
+  fe_copy(r->Y,p->Y);
+  fe_copy(r->Z,p->Z);
+}
