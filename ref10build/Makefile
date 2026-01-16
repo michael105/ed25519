@@ -17,7 +17,7 @@ CC ?= gcc
 CFLAGS ?= -Os -march=x86-64 -ffunction-sections -fdata-sections -fno-common \
           -Wall -Wextra -I. -std=c11
 # Hide symbols by default; rely on explicit attribute((visibility("default"))) in sources for exported API, if any.
-CFLAGS += -fvisibility=hidden
+CFLAGS += -fvisibility=hidden 
 
 LDFLAGS ?= -Wl,--gc-sections -s
 
@@ -32,12 +32,14 @@ TARGET := ed25519-keypair
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) -D'CRYPTO_NAMESPACE(name)=crypto_##name'
+
 
 # Generic compile rule
 %.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@  -D'CRYPTO_NAMESPACE(name)=crypto_##name'
+
 
 run: all
 	./$(TARGET)
