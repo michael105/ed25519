@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+benchmarkdir = 'benchmarks+s2n'
+
 import os
 import sys
 
@@ -26,7 +28,7 @@ impls = set()
 data = {}
 
 def handle(benchmark):
-  with open('benchmarks/%s' % benchmark) as f:
+  with open(f'{benchmarkdir}/{benchmark}') as f:
     for line in f:
       line = line.split()
       if line[:2] == ['lib25519','version']:
@@ -61,7 +63,7 @@ def handle(benchmark):
           if key not in data: data[key] = []
           data[key] += [(shortfun,cycles)]
 
-for benchmark in sorted(os.listdir('benchmarks')):
+for benchmark in sorted(os.listdir(benchmarkdir)):
   handle(benchmark)
 
 impldata = {}

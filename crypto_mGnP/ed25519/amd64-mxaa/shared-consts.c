@@ -1,1 +1,1 @@
-../../../crypto_sign/ed25519/amd64/shared-consts.c
+../amd64-maa4/shared-consts.c

@@ -18,6 +18,7 @@ prefix = '/usr/local'
 clean = True
 trim = True
 tryifunc = True
+darwin = platform.system() == 'Darwin'
 
 def hostsanitize(host):
   host = host.split('-')[0]
@@ -76,6 +77,12 @@ for arg in sys.argv[1:]:
   if arg == '--notryifunc':
     tryifunc = False
     continue
+  if arg == '--darwin':
+    darwin = True
+    continue
+  if arg == '--nodarwin':
+    darwin = False
+    continue
   raise ValueError('unrecognized argument %s' % arg)
 
 echoargs = './configure'
@@ -87,6 +94,8 @@ if trim: echoargs += ' --trim'
 if not trim: echoargs += ' --notrim'
 if tryifunc: echoargs += ' --tryifunc'
 if not tryifunc: echoargs += ' --notryifunc'
+if darwin: echoargs += ' --darwin'
+if not darwin: echoargs += ' --nodarwin'
 log(echoargs)
 
 if prefix[0] != '/':
@@ -151,6 +160,19 @@ with open('project/namespace') as f:
 with open('project/library') as f:
   projectlibrary = f.read().strip()
 
+# ----- shared-library variations
+
+so = 'dylib' if darwin else 'so'
+so1 = '1.dylib' if darwin else 'so.1'
+soname = 'install_name' if darwin else 'soname'
+sharedlibopts = '-shared -flat_namespace' if darwin else '-shared'
+with open(f'build/{host}/scripts/sharedlib-so1','w') as f:
+  f.write(so1+'\n')
+with open(f'build/{host}/scripts/sharedlib-soname','w') as f:
+  f.write(soname+'\n')
+with open(f'build/{host}/scripts/sharedlib-opts','w') as f:
+  f.write(sharedlibopts+'\n')
+
 # ----- inttypes
 
 with open('inttypes/crypto_intN.h') as f:
@@ -176,11 +198,15 @@ def compilerversion(c):
   except:
     pass
 
+allarches = []
+
 compilerversionline = {}
 compilers = {}
 for arch in sorted(os.listdir('compilers')):
   if arch.endswith('.c'): continue
   if arch == 'default' or arch == host or arch.startswith('%s+' % host):
+    allarches += [arch]
+    compilers[arch] = []
     with open('compilers/%s' % arch) as f:
       for c in f.readlines():
         c = c.strip()
@@ -188,11 +214,14 @@ for arch in sorted(os.listdir('compilers')):
         if cv == None:
           log('skipping %s compiler %s' % (arch,c))
           continue
-        if arch not in compilers: compilers[arch] = []
         compilers[arch] += [c]
         cv = (c+'\n'+cv).strip().replace('\n','; ')
         compilerversionline[arch,c] = cv
         log('using %s compiler %s' % (arch,cv))
+
+with open('build/%s/allarches' % host,'w') as f:
+  for arch in allarches:
+    f.write('%s\n' % arch)
 
 firstcompiler = compilers['default'][0]
 
@@ -205,11 +234,14 @@ os.chmod('build/%s/scripts/cdcompile' % host,0o755)
 
 compilerabbrev = {}
 i = 0
-for arch in sorted(compilers):
+for arch in allarches:
   for compiler in compilers[arch]:
     compilerabbrev[arch,compiler] = 'C%d'%i
     i += 1
     log('abbreviating %s = %s %s' % (compilerabbrev[arch,compiler],arch,compiler))
+
+if len(compilerabbrev) != len(sorted(compiler for arch in allarches for compiler in compilers[arch])):
+  raise Exception('duplicate compilers not allowed; note: ok to add an arch with an empty compiler list')
 
 os.makedirs('build/%s/compilerarch' % host,exist_ok=True)
 for arch,compiler in compilerabbrev:
@@ -225,7 +257,7 @@ for arch,compiler in compilerabbrev:
 
 copytree('compilers','build/%s/compilers' % host)
 
-for arch in sorted(compilers):
+for arch in allarches:
   if arch == 'default': continue
   assert os.path.exists('compilers/%s.c'%arch)
 
@@ -237,7 +269,7 @@ for arch in sorted(compilers):
   makefile = M + makefile
 
 M = '\n'
-M += 'compilers-all: %s\n' % ' '.join('compilers/%s.o'%arch for arch in sorted(compilers) if arch != 'default')
+M += 'compilers-all: %s\n' % ' '.join('compilers/%s.o'%arch for arch in allarches if arch != 'default')
 M += '\ttouch compilers-all\n'
 makefile = M + makefile
 
@@ -892,14 +924,14 @@ M += '\tscripts/staticlib lib%s\n' % projectlibrary
 M += '\n'
 makefile = M + makefile
 
-M = 'package/lib/lib%s.so.1: scripts/sharedlib ofiles\n' % projectlibrary
+M = f'package/lib/lib{projectlibrary}.{so1}: scripts/sharedlib ofiles\n'
 M += '\tscripts/sharedlib lib%s -lrandombytes\n' % projectlibrary
 M += '\n'
 makefile = M + makefile
 
-M = 'package/lib/lib%s.so: package/lib/lib%s.so.1\n' % (projectlibrary,projectlibrary)
-M += '\trm -f package/lib/lib%s.so\n' % projectlibrary
-M += '\tln -s lib%s.so.1 package/lib/lib%s.so\n' % (projectlibrary,projectlibrary)
+M = f'package/lib/lib{projectlibrary}.{so}: package/lib/lib{projectlibrary}.{so1}\n'
+M += f'\trm -f package/lib/lib{projectlibrary}.{so}\n'
+M += f'\tln -s lib{projectlibrary}.{so1} package/lib/lib{projectlibrary}.{so}\n'
 M += '\n'
 makefile = M + makefile
 
@@ -953,8 +985,8 @@ for fn in sorted(os.listdir('command')):
       if '-lrandombytes' in line:
         syslink += ' -lrandombytes'
       if '-l%s'%projectlibrary in line:
-        deps += ' package/lib/lib%s.so' % projectlibrary
-        link += ' lib/lib%s.so' % projectlibrary
+        deps += f' package/lib/lib{projectlibrary}.{so}'
+        link += f' lib/lib{projectlibrary}.{so}'
 
   link += syslink
 
@@ -989,7 +1021,7 @@ makefile = M + makefile
 
 # ----- make default
 
-M = 'default: package/lib/lib%s.a package/lib/lib%s.so package/lib/lib%s.so.1 \\\n' % (projectlibrary,projectlibrary,projectlibrary)
+M = f'default: package/lib/lib{projectlibrary}.a package/lib/lib{projectlibrary}.{so} package/lib/lib{projectlibrary}.{so1} \\\n'
 M += 'commands\n'
 M += '\n'
 makefile = M + makefile

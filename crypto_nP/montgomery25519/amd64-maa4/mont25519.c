@@ -3,23 +3,21 @@
 #include "fe25519.h"
 
 #define mladder CRYPTO_SHARED_NAMESPACE(mladder)
-extern void mladder(fe25519 *,fe25519 *,const unsigned char *);
+extern void mladder(fe25519 *,fe25519 *,const unsigned long long *);
 
-void crypto_nP(unsigned char *r,
-                      const unsigned char *s,
-                      const unsigned char *p)
-{
-  unsigned char e[32];
-  int i;
-  for(i=0;i<32;i++) e[i] = s[i];
-  e[0] &= 248;
-  e[31] &= 127;
-  e[31] |= 64; 
+void crypto_nP(unsigned char *q, const unsigned char *n, const unsigned char *p) {
 
-  fe25519 t[2];
-  fe25519_unpack(t, p);
-  mladder(t, t, e);
-  fe25519_invert(t+1, t+1);
-  fe25519_mul(t, t, t+1);
-  fe25519_pack(r, t);
+	fe25519 r[2];
+	
+	int i;
+	unsigned long long s[4],*t;	
+	
+	t = (unsigned long long *)n;
+	for (i=0;i<4;++i) s[i] = *(t + i);	
+	
+	fe25519_unpack(r,p);
+  	mladder(r,r,s);
+  	fe25519_invert(r+1,r+1);
+  	fe25519_mul(r,r,r+1);
+  	fe25519_pack(q,r);
 }

@@ -30,7 +30,9 @@ def archkey(a):
   return -a.count('+'),a
 
 allimpls = sorted(set(i for i,c in impls))
-allarches = sorted(set(icarch[i,c] for i,c in impls),key=archkey)
+with open('allarches') as f:
+  allarches = f.read().splitlines()
+allarches = sorted(set(allarches),key=archkey)
 
 prioritydata = []
 
@@ -73,10 +75,13 @@ def cpuidsupports(cpuid,a):
   adx = cpuid[20] & (1<<19)
   avx512ifma = cpuid[20] & (1<<21)
   avx512vl = cpuid[20] & (1<<31)
+  waitpkg = cpuid[21] & (1<<5)
+  vaes = cpuid[21] & (1<<9)
+  sse4a = cpuid[25] & (1<<6)
   xmmsaved = cpuid[27] & (1<<1)
   ymmsaved = cpuid[27] & (1<<2)
   for apart in a[1:]:
-    if apart not in ('sse3','ssse3','sse41','sse42','popcnt','adx','avx','bmi1','bmi2','avx2','avx512f','avx512vl','avx512ifma'):
+    if apart not in ('sse3','ssse3','sse41','sse42','sse4a','popcnt','adx','avx','bmi1','bmi2','avx2','avx512f','avx512vl','avx512ifma','vaes','waitpkg'):
       raise ValueError('cpuidsupports does not understand %s' % apart)
 
     if not mmx: return False
@@ -87,15 +92,18 @@ def cpuidsupports(cpuid,a):
     if apart == 'ssse3' and not ssse3: return False
     if apart == 'sse41' and not sse41: return False
     if apart == 'sse42' and not sse42: return False
+    if apart == 'sse4a' and not sse4a: return False
     if apart == 'popcnt' and not popcnt: return False
     if apart == 'adx' and not adx: return False
     if apart == 'avx' and not avx: return False
     if apart == 'bmi1' and not bmi1: return False
     if apart == 'bmi2' and not bmi2: return False
-    if apart == 'av2' and not avx2: return False
+    if apart == 'avx2' and not avx2: return False
     if apart == 'avx512f' and not avx512f: return False
     if apart == 'avx512vl' and not avx512vl: return False
     if apart == 'avx512ifma' and not avx512ifma: return False
+    if apart == 'vaes' and not vaes: return False
+    if apart == 'waitpkg' and not waitpkg: return False
 
     if apart.startswith('avx'):
       if not osxsave: return False

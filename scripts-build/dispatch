@@ -48,7 +48,6 @@ namespace = sys.argv[5]
 impls = []
 selected = []
 usedimpls = set()
-allarches = []
 
 for line in sys.stdin:
   line = line.split()
@@ -56,10 +55,12 @@ for line in sys.stdin:
     impls += [line[1:]]
   if line[0] == 'selected':
     a,i,c = line[1:]
-    allarches += [a]
     selected += [(a,i,c)]
     usedimpls.add((i,c))
-    
+
+with open('allarches') as f:
+  allarches = f.read().splitlines()
+
 icarch = {}
 iccompiler = {}
 

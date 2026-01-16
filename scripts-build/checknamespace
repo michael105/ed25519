@@ -32,8 +32,7 @@ def doit(d):
     for dpart in dsplit:
       namespace += '_'+dpart.replace('-','').replace('_','')
 
-  obj2R = {}
-  obj2T = {}
+  obj2D = {}
   obj2U = {}
 
   try:
@@ -56,31 +55,31 @@ def doit(d):
     if line[2].startswith('b'): continue
     if line[2].startswith('d'): continue
     if line[2].startswith('r'): continue
+    if line[2].startswith('s'): continue
     if line[2].startswith('t'): continue
 
     obj = line[0][:-1]
     if obj not in obj2U:
       obj2U[obj] = []
-      obj2R[obj] = []
-      obj2T[obj] = []
+      obj2D[obj] = []
 
     symbol = line[1]
     if symbol.startswith('__odr_asan.'): symbol = symbol[11:]
     if symbol.startswith('__x86.get_pc_thunk.'): continue
 
+    if symbol.startswith(f'_{topnamespace}_'): symbol = symbol[1:]
     ssplit = symbol.split('_')
-    if len(ssplit) >= 6 and ssplit[0] in (topnamespace,'_'+topnamespace):
+    if len(ssplit) >= 6 and ssplit[0] == topnamespace:
       ssplit = '_'.join(ssplit[5:])
       if line[2].startswith('U'): obj2U[obj] += [ssplit]
-      if line[2].startswith('R'): obj2R[obj] += [ssplit]
-      if line[2].startswith('T'): obj2T[obj] += [ssplit]
+      if line[2].startswith('R'): obj2D[obj] += [ssplit]
+      if line[2].startswith('S'): obj2D[obj] += [ssplit]
+      if line[2].startswith('T'): obj2D[obj] += [ssplit]
 
     if line[2].startswith('U'): continue
 
     if symbol == namespace: continue
-    if symbol == '_'+namespace: continue
     if symbol.startswith(namespace+'_'): continue
-    if symbol.startswith('_'+namespace+'_'): continue
 
     warn('%s: symbol %s outside namespace' % (obj,symbol))
 
@@ -105,7 +104,7 @@ def doit(d):
       if len(fnD) == 0 and len(fnU) == 0: continue
       fnD = set(fnD)
       fnU = set(fnU)
-      objD = set(obj2T[obj]).union(set(obj2R[obj]))
+      objD = set(obj2D[obj])
       objU = set(obj2U[obj])
 
       for s in sorted(fnD):

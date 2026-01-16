@@ -156,12 +156,15 @@ def extok(arch,ext):
   if ext == 'ssse3': return 'ssse3' in arch
   if ext == 'sse4.1': return 'sse41' in arch
   if ext == 'sse4.2': return 'sse42' in arch
+  if ext == 'sse4a': return 'sse4a' in arch
   if ext == 'avx': return 'avx' in arch
   if ext == 'adx': return 'adx' in arch
   if ext == 'avx2': return 'avx2' in arch
   if ext == 'avx512f': return 'avx512f' in arch
   if ext == 'avx512vl': return 'avx512vl' in arch
   if ext == 'avx512ifma': return 'avx512ifma' in arch
+  # XXX: could test for vaes, but not actually interested in using it
+  # XXX: could test for waitpkg, but not actually interested in using it
   return False # XXX
 
 def checkinsn(obj,arch,insn):
