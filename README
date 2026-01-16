@@ -1,7 +1,6 @@
-Notice: This is some cruft, just don't use it,
+Notice: 
 	in this repo are several versions layered.
-	Me I'm having some fun with those macros.
-	This library obviously wasn't build for size optimization.
+	Just don't use it.
 
 
 lib25519 is a microlibrary for the X25519 encryption system and the

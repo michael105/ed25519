@@ -34,7 +34,9 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) -D'CRYPTO_NAMESPACE(name)=crypto_##name' \
 		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name' \
-		-Dcrypto_hash_sha512=crypto_hash 
+		-Dcrypto_hash_sha512=crypto_hash \
+		-Dlib25519_hashblocks_sha512=crypto_hashblocks \
+		-Dcrypto_nG_merged25519=crypto_nG
 
 
 # Generic compile rule
@@ -42,7 +44,9 @@ $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@  -D'CRYPTO_NAMESPACE(name)=crypto_##name' \
 		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name' \
-		-Dcrypto_hash_sha512=crypto_hash  
+		-Dcrypto_hash_sha512=crypto_hash  \
+	-Dlib25519_hashblocks_sha512=crypto_hashblocks \
+	-Dcrypto_nG_merged25519=crypto_nG
 
 
 run: all
