@@ -1,0 +1,1 @@
+../../../../src/crypto_multiscalar/ed25519/amd64-maa4-p3-opt/multiscalar.c

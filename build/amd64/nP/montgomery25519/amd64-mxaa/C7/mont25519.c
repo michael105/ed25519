@@ -1,0 +1,1 @@
+../../../../src/crypto_nP/montgomery25519/amd64-mxaa/mont25519.c

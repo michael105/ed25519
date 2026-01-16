@@ -1,0 +1,1 @@
+../../../../src/crypto_multiscalar/ed25519/amd64-maax-opt/ge25519_pack.c

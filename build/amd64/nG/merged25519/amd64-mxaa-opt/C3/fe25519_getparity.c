@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-mxaa-opt/fe25519_getparity.c

@@ -1,0 +1,1 @@
+../../../../src/crypto_mGnP/ed25519/amd64-avx2-10l-maax/sc25519.h

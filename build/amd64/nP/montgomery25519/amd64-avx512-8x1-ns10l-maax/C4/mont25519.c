@@ -1,0 +1,1 @@
+../../../../src/crypto_nP/montgomery25519/amd64-avx512-8x1-ns10l-maax/mont25519.c

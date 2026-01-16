@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-mxaa/ge25519_scalarmult_base.c

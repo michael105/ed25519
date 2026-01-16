@@ -1,0 +1,1 @@
+../../../../src/crypto_pow/inv25519/amd64-maa5/fe25519_invert.c

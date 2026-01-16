@@ -1,0 +1,1 @@
+../../../../src/crypto_nP/montgomery25519/amd64-avx512-hey10l-maax/fe25519_invert.c

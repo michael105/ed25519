@@ -1,0 +1,1 @@
+../../../../src/crypto_multiscalar/ed25519/amd64-maax-p3/fe25519_neg.c

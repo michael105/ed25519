@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-avx2-10l-maax/consts_namespace.h

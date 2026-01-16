@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-mxaa/sc25519_window4.c

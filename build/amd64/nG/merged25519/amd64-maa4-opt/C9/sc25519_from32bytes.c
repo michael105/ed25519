@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-maa4-opt/sc25519_from32bytes.c

@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-maax/sc25519.h

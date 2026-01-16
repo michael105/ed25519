@@ -1,0 +1,1 @@
+../../../../src/crypto_nPbatch/montgomery25519/amd64-avx512ifma-8x1-maax/mont25519_batch.c

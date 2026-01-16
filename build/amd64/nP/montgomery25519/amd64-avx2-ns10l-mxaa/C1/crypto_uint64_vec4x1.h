@@ -1,0 +1,1 @@
+../../../../src/crypto_nP/montgomery25519/amd64-avx2-ns10l-mxaa/crypto_uint64_vec4x1.h

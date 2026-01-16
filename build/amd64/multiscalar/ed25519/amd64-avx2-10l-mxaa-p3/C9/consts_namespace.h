@@ -1,0 +1,1 @@
+../../../../src/crypto_multiscalar/ed25519/amd64-avx2-10l-mxaa-p3/consts_namespace.h

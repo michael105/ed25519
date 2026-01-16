@@ -1,0 +1,1 @@
+../../../../src/crypto_multiscalar/ed25519/amd64-avx2-9l-maa4-p3/fe25519_invert.c

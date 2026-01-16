@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-avx2-10l-maax/sc25519_from32bytes.c

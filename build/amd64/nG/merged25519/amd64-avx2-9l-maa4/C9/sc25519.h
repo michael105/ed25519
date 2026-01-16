@@ -1,0 +1,1 @@
+../../../../src/crypto_nG/merged25519/amd64-avx2-9l-maa4/sc25519.h

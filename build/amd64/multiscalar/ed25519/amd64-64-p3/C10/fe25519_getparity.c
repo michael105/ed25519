@@ -1,0 +1,1 @@
+../../../../src/crypto_multiscalar/ed25519/amd64-64-p3/fe25519_getparity.c

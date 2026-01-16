@@ -1,0 +1,1 @@
+../../../../src/crypto_nP/montgomery25519/amd64-avx512-ns9l-maax/consts_namespace.h

@@ -1,0 +1,1 @@
+../../../../src/crypto_sign/ed25519/amd64/sign.c
