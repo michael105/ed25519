@@ -33,14 +33,16 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) -D'CRYPTO_NAMESPACE(name)=ed_##name' \
-		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name'
+		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name' \
+		-Dcrypto_hash_sha512=crypto_hash 
 
 
 # Generic compile rule
 %.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@  -D'CRYPTO_NAMESPACE(name)=ed_##name' \
-		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name'
+		-D'CRYPTO_SHARED_NAMESPACE(name)=edshared_##name' \
+		-Dcrypto_hash_sha512=crypto_hash 
 
 
 run: all

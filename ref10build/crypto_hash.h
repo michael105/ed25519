@@ -1,6 +1,10 @@
 #ifndef crypto_hash_h
 #define crypto_hash_h
 
+#define lib25519_hash_sha512_BYTES 64
+#define lib25519_hash lib25519_hash_sha512
+
+
 #define crypto_hash CRYPTO_NAMESPACE(hash)
 
 #define crypto_hash_sha512_BYTES 64

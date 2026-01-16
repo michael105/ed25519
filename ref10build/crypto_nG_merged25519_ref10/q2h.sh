@@ -1,1 +1,4 @@
-../../../crypto_mGnP/ed25519/ref10/q2h.sh
+#!/bin/sh
+sed 's/^#.*//' \
+| qhasm-generic \
+| sed 's_//\(.*\)$_/*\1 */_'
